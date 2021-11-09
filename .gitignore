@@ -2,9 +2,10 @@
 .idea/
 logs/
 chkpts/
+data/
 
 # Don't track files with these extensioons
-
+*.pkl
 *.npy
 *.pth
 *.csv
