@@ -12,6 +12,8 @@ data/
 *.json
 *.txt
 *.pt
+*.tar
+*.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
