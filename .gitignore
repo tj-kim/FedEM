@@ -4,7 +4,7 @@ logs/
 chkpts/
 
 # Don't track files with these extensioons
-*.ipynb
+
 *.npy
 *.pth
 *.csv
