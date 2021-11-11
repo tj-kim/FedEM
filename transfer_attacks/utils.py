@@ -173,3 +173,10 @@ class Custom_Dataloader:
         out_y_data = self.y_data[samples].to(device='cuda')
         
         return out_x_data, out_y_data
+    
+    def select_single(self):
+        sample_idx = random.sample(range(self.y_data.shape[0]),1)
+        x_point = self.x_data[sample_idx].to(device='cuda')
+        y_point = self.y_data[sample_idx].to(device='cuda')
+        
+        return sample_idx, x_point, y_point
