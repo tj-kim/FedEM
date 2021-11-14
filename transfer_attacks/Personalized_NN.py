@@ -133,6 +133,48 @@ class Adv_NN(Personalized_NN):
         self.output_adv = None 
         
         
+    def i_fgsm_sub(self, atk_params, x_in, y_in):
+        """
+        Sub-problem of running 
+        """
+        
+        self.eval()
+        self.x_adv = Variable(x_in, requires_grad=True)
+        
+        target= atk_params.target
+        eps= atk_params.eps
+        alpha= atk_params.alpha
+        iteration= atk_params.iteration
+        x_val_min= atk_params.x_val_min
+        x_val_max= atk_params.x_val_max
+        
+        for i in range(iteration):
+            
+            h_adv = self.forward(self.x_adv)
+            
+            # Loss function based on target
+            if target > -1:
+                target_tensor = torch.LongTensor(y_in.size()).fill_(target)
+                target_tensor = Variable(cuda(target_tensor, self.cuda), requires_grad=False)
+                cost = self.criterion(h_adv, target_tensor)
+            else:
+                cost = -self.criterion(h_adv, y_in)
+
+            self.zero_grad()
+
+            if self.x_adv.grad is not None:
+                self.x_adv.grad.data.fill_(0)
+            cost.backward()
+
+            self.x_adv.grad.sign_()
+            self.x_adv = self.x_adv - alpha*self.x_adv.grad
+            self.x_adv = where(self.x_adv > x_in+eps, x_in+eps, self.x_adv)
+            self.x_adv = where(self.x_adv < x_in-eps, x_in-eps, self.x_adv)
+            self.x_adv = torch.clamp(self.x_adv, x_val_min, x_val_max)
+            self.x_adv = Variable(self.x_adv.data, requires_grad=True)
+            
+        return 
+        
     def i_fgsm(self, atk_params, print_info=False, mode = 'test'):
         """
             Perform IFSGM attack on a randomly sampled batch 
