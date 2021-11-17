@@ -59,6 +59,27 @@ class Personalized_NN(nn.Module):
         
         return x
     
+    def ensemble_forward_transfer(self, x_orig, x_adv, true_labels, target):
+        """
+        Same function as forward transfer with less calculations
+        """
+        self.eval()
+        
+        batch_size = x_orig.shape[0]
+        
+        # Forward Two Input Types
+        h_adv = self.forward(x_adv)
+        h_orig = self.forward(x_orig)
+        h_adv_category = torch.argmax(h_adv,dim = 1)
+        h_orig_category = torch.argmax(h_orig,dim = 1)
+        
+        # Record Different Parameters
+        self.orig_target_achieve = (h_orig_category == target).float().sum()/batch_size
+        self.adv_target_achieve = (h_adv_category == target).float().sum()/batch_size
+            
+        return (h_adv, h_orig, h_adv_category, h_orig_category)
+        
+    
     def forward_transfer(self, x_orig, x_adv, y_orig, y_adv,
                          true_labels, target, print_info = False):
         """
