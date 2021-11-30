@@ -15,6 +15,7 @@ from torch.autograd import Variable
 import copy
 
 from transfer_attacks.utils import *
+from transfer_attacks.projected_gradient_descent import *
 
 class Personalized_NN(nn.Module):
     """
@@ -195,6 +196,38 @@ class Adv_NN(Personalized_NN):
             self.x_adv = Variable(self.x_adv.data, requires_grad=True)
             
         return 
+    
+    def pgd_sub(self, atk_params, x_in, y_in, x_base):
+        """
+        Perform PGD without post-attack analysis
+        """
+        self.eval()
+        self.x_adv = Variable(x_in, requires_grad=True)
+        self.x_orig = x_base
+        
+        num_steps = atk_params.iteration
+        step_size = atk_params.step_size
+        step_norm = atk_params.step_norm
+        eps = atk_params.eps
+        eps_norm = atk_params.eps_norm
+        clamp_max = atk_params.x_val_min
+        clamp_min = atk_params.x_val_max
+        
+        y_target = None
+        if atk_params.target > -1:
+            target_array = torch.tensor(atk_params.target)
+            y_target = target_array.repeat(atk_params.batch_size).cuda()
+            # y_target = torch.nn.functional.one_hot(target_array, atk_params.num_class)
+        
+        self.x_adv = projected_gradient_descent(model = self.trained_network,
+                                               x = self.x_adv, y = y_in, 
+                                               loss_fn = self.criterion, 
+                                               num_steps = num_steps, step_size= step_size, step_norm= step_norm,
+                                               eps = eps, eps_norm = eps_norm,
+                                               clamp=(clamp_min,clamp_max), y_target=y_target, x_base=self.x_orig)
+            
+        return
+        
         
     def i_fgsm(self, atk_params, print_info=False, mode = 'test'):
         """

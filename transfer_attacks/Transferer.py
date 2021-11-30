@@ -50,9 +50,9 @@ class Transferer():
         self.metric_ingrad_adv = {} # Dict - key is victim NN id
         
         # Attack Params
-        self.ifsgm_params = IFSGM_Params()
-        self.ifsgm_params.x_val_min = torch.min(dataloader.x_data).item()
-        self.ifsgm_params.x_val_max = torch.max(dataloader.x_data).item() 
+        self.atk_params = IFSGM_Params()
+        self.atk_params.x_val_min = torch.min(dataloader.x_data).item()
+        self.atk_params.x_val_max = torch.max(dataloader.x_data).item() 
         
         # Other Params
         self.advNN_idx = None # int
