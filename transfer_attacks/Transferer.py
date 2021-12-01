@@ -90,10 +90,12 @@ class Transferer():
         """
         
         if (atk_type == "IFSGM") or (atk_type == "ifsgm"): 
-            self.advNN.i_fgsm(self.ifsgm_params, mode=mode)
+            self.advNN.i_fgsm(self.atk_params, mode=mode)
+        elif (atk_type == "PGD") or (atk_type == "pgd"):
+            self.advNN.pgd(self.atk_params, mode=mode)
         else:
             print("Attak type unidentified -- Running IFSGM")
-            self.advNN.i_fgsm(self.ifsgm_params, mode=mode)
+            self.advNN.i_fgsm(self.atk_params, mode=mode)
         
         # Record relevant tensors
         self.x_orig = self.advNN.x_orig
@@ -125,7 +127,7 @@ class Transferer():
           
             self.victims[i].forward_transfer(self.x_orig,self.x_adv,
                                          self.y_orig,self.y_adv,
-                                         self.y_true, self.ifsgm_params.target, 
+                                         self.y_true, self.atk_params.target, 
                                          print_info=False)
 
             # Record Performance

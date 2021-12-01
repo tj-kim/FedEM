@@ -228,6 +228,76 @@ class Adv_NN(Personalized_NN):
             
         return
         
+    def pgd(self, atk_params, print_info=False, mode='test'):
+        
+        self.eval()
+        
+        # Import attack parameters
+        eps_norm = atk_params.eps_norm
+        batch_size = atk_params.batch_size
+        target= atk_params.target
+        eps= atk_params.eps
+        alpha= atk_params.step_size
+        iteration= atk_params.iteration
+        x_val_min= atk_params.x_val_min
+        x_val_max= atk_params.x_val_max
+        
+        # Load data to perturb
+    
+        data_x, data_y = self.dataloader.load_batch(batch_size, mode=mode)
+        self.x_orig  = data_x.reshape(batch_size,3,32,32)
+        self.y_orig = data_y.type(torch.LongTensor)
+        
+        if torch.cuda.is_available():
+            self.y_orig = self.y_orig.cuda()
+        
+        self.target = target
+        
+        self.x_adv = Variable(self.x_orig, requires_grad=True)
+        
+        for i in range(iteration):
+            
+            h_adv = self.forward(self.x_adv)
+            
+            # Loss function based on target
+            if target > -1:
+                target_tensor = torch.LongTensor(self.y_orig.size()).fill_(target)
+                target_tensor = Variable(cuda(target_tensor, self.cuda), requires_grad=False)
+                cost = self.criterion(h_adv, target_tensor)
+            else:
+                cost = -self.criterion(h_adv, self.y_orig)
+
+            self.zero_grad()
+
+            if self.x_adv.grad is not None:
+                self.x_adv.grad.data.fill_(0)
+            cost.backward()
+
+            self.x_adv.grad.sign_()
+            self.x_adv = self.x_adv - alpha*self.x_adv.grad
+            # self.x_adv = where(self.x_adv > self.x_orig+eps, self.x_orig+eps, self.x_adv)
+            # self.x_adv = where(self.x_adv < self.x_orig-eps, self.x_orig-eps, self.x_adv)
+            
+            delta = self.x_adv - self.x_orig
+
+            # Assume x and x_adv are batched tensors where the first dimension is
+            # a batch dimension
+            mask = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1) <= eps
+
+            scaling_factor = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1)
+            scaling_factor[mask] = eps
+
+            # .view() assumes batched images as a 4D Tensor
+            delta *= eps / scaling_factor.view(-1, 1, 1, 1)
+
+            self.x_adv = self.x_orig + delta
+            
+            self.x_adv = torch.clamp(self.x_adv, x_val_min, x_val_max)
+            self.x_adv = Variable(self.x_adv.data, requires_grad=True)
+        
+        self.post_attack(batch_size = batch_size, print_info = print_info)
+        
+        return
         
     def i_fgsm(self, atk_params, print_info=False, mode = 'test'):
         """

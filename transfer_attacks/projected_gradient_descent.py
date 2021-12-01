@@ -43,7 +43,7 @@ def projected_gradient_descent(model, x, y, loss_fn, num_steps, step_size, step_
             # Workaround as PyTorch doesn't have elementwise clip
             x_adv = torch.max(torch.min(x_adv, x + eps), x - eps)
         else:
-            delta = x_adv - x_base
+            delta = x_adv - x
 
             # Assume x and x_adv are batched tensors where the first dimension is
             # a batch dimension
