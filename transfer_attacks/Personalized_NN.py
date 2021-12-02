@@ -197,35 +197,74 @@ class Adv_NN(Personalized_NN):
             
         return 
     
-    def pgd_sub(self, atk_params, x_in, y_in, x_base):
+    def pgd_sub(self, atk_params, x_in, y_in, x_base = None):
         """
         Perform PGD without post-attack analysis
         """
         self.eval()
-        self.x_adv = Variable(x_in, requires_grad=True)
-        self.x_orig = x_base
         
-        num_steps = atk_params.iteration
-        step_size = atk_params.step_size
-        step_norm = atk_params.step_norm
-        eps = atk_params.eps
+        # Import attack parameters
         eps_norm = atk_params.eps_norm
-        clamp_max = atk_params.x_val_min
-        clamp_min = atk_params.x_val_max
+        batch_size = atk_params.batch_size
+        target= atk_params.target
+        eps= atk_params.eps
+        alpha= atk_params.step_size
+        iteration= atk_params.iteration
+        x_val_min= atk_params.x_val_min
+        x_val_max= atk_params.x_val_max
         
-        y_target = None
-        if atk_params.target > -1:
-            target_array = torch.tensor(atk_params.target)
-            y_target = target_array.repeat(atk_params.batch_size).cuda()
-            # y_target = torch.nn.functional.one_hot(target_array, atk_params.num_class)
+        # Load data to perturb
+    
+        self.x_orig  = x_in
+        self.y_orig = y_in
         
-        self.x_adv = projected_gradient_descent(model = self.trained_network,
-                                               x = self.x_adv, y = y_in, 
-                                               loss_fn = self.criterion, 
-                                               num_steps = num_steps, step_size= step_size, step_norm= step_norm,
-                                               eps = eps, eps_norm = eps_norm,
-                                               clamp=(clamp_min,clamp_max), y_target=y_target, x_base=self.x_orig)
+        if torch.cuda.is_available():
+            self.y_orig = self.y_orig.cuda()
+        
+        self.target = target
+        
+        self.x_adv = Variable(self.x_orig, requires_grad=True)
+        
+        for i in range(iteration):
             
+            h_adv = self.forward(self.x_adv)
+            
+            # Loss function based on target
+            if target > -1:
+                target_tensor = torch.LongTensor(self.y_orig.size()).fill_(target)
+                target_tensor = Variable(cuda(target_tensor, self.cuda), requires_grad=False)
+                cost = self.criterion(h_adv, target_tensor)
+            else:
+                cost = -self.criterion(h_adv, self.y_orig)
+
+            self.zero_grad()
+
+            if self.x_adv.grad is not None:
+                self.x_adv.grad.data.fill_(0)
+            cost.backward()
+
+            self.x_adv.grad.sign_()
+            self.x_adv = self.x_adv - alpha*self.x_adv.grad
+            # self.x_adv = where(self.x_adv > self.x_orig+eps, self.x_orig+eps, self.x_adv)
+            # self.x_adv = where(self.x_adv < self.x_orig-eps, self.x_orig-eps, self.x_adv)
+            
+            delta = self.x_adv - self.x_orig
+
+            # Assume x and x_adv are batched tensors where the first dimension is
+            # a batch dimension
+            mask = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1) <= eps
+
+            scaling_factor = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1)
+            scaling_factor[mask] = eps
+
+            # .view() assumes batched images as a 4D Tensor
+            delta *= eps / scaling_factor.view(-1, 1, 1, 1)
+
+            self.x_adv = self.x_orig + delta
+            
+            self.x_adv = torch.clamp(self.x_adv, x_val_min, x_val_max)
+            self.x_adv = Variable(self.x_adv.data, requires_grad=True)
+        
         return
         
     def pgd(self, atk_params, print_info=False, mode='test'):
