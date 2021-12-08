@@ -77,7 +77,7 @@ if __name__ == "__main__":
     args_.locally_tune_clients = False
     args_.seed = 1234
     args_.verbose = 1
-    args_.save_path = 'weights/cifar/21_12_02_first_transfers_xadv_train/'
+    args_.save_path = 'weights/cifar/21_12_02_first_transfers_xadv_train_n40/'
     args_.validation = False
 
     data_save_path = 'adv_data/cifar/21_12_01_from_21_09_28_first_transfers/'
@@ -86,7 +86,9 @@ if __name__ == "__main__":
     aggregator, clients = dummy_aggregator(args_)
     
     # Add clients xadv dataset
-    for i in range(len(aggregator.clients)):
+    num_adv_nodes = 40 # len(aggregator.clients)
+    
+    for i in range(num_adv_nodes):
         dataloader_path = data_save_path + "client_" + str(i) + ".p"
         dataloader = pickle.load( open(dataloader_path, "rb" ) )
         
