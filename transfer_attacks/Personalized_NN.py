@@ -223,7 +223,16 @@ class Adv_NN(Personalized_NN):
         
         self.target = target
         
-        self.x_adv = Variable(self.x_orig, requires_grad=True)
+        # Add random noise within norm ball for start (FOR BATCH)
+        noise_unscaled = torch.rand(self.x_orig.shape)
+        if eps_norm == 'inf':
+            # Workaround as PyTorch doesn't have elementwise clip
+            norm_scale = torch.ones_like(noise_unscaled[0]).norm(float('inf'))
+        else:
+            norm_scale = torch.ones_like(noise_unscaled[0]).norm(eps_norm)                                                          
+        noise_scaled = (noise_unscaled*eps/norm_scale).cuda()
+        
+        self.x_adv = Variable(self.x_orig+noise_scaled, requires_grad=True)
         
         for i in range(iteration):
             
@@ -245,22 +254,25 @@ class Adv_NN(Personalized_NN):
 
             self.x_adv.grad.sign_()
             self.x_adv = self.x_adv - alpha*self.x_adv.grad
-            # self.x_adv = where(self.x_adv > self.x_orig+eps, self.x_orig+eps, self.x_adv)
-            # self.x_adv = where(self.x_adv < self.x_orig-eps, self.x_orig-eps, self.x_adv)
             
-            delta = self.x_adv - self.x_orig
+            
+            if eps_norm == 'inf':
+                # Workaround as PyTorch doesn't have elementwise clip
+                self.x_adv = torch.max(torch.min(self.x_adv, self.x_orig + eps), self.x_orig - eps)
+            else: # Other norms (mostly 2 norm)
+                delta = self.x_adv - self.x_orig
 
-            # Assume x and x_adv are batched tensors where the first dimension is
-            # a batch dimension
-            mask = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1) <= eps
+                # Assume x and x_adv are batched tensors where the first dimension is
+                # a batch dimension
+                mask = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1) <= eps
 
-            scaling_factor = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1)
-            scaling_factor[mask] = eps
+                scaling_factor = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1)
+                scaling_factor[mask] = eps
 
-            # .view() assumes batched images as a 4D Tensor
-            delta *= eps / scaling_factor.view(-1, 1, 1, 1)
+                # .view() assumes batched images as a 4D Tensor
+                delta *= eps / scaling_factor.view(-1, 1, 1, 1)
 
-            self.x_adv = self.x_orig + delta
+                self.x_adv = self.x_orig + delta
             
             self.x_adv = torch.clamp(self.x_adv, x_val_min, x_val_max)
             self.x_adv = Variable(self.x_adv.data, requires_grad=True)
@@ -292,7 +304,16 @@ class Adv_NN(Personalized_NN):
         
         self.target = target
         
-        self.x_adv = Variable(self.x_orig, requires_grad=True)
+        # Add random noise within norm ball for start (FOR BATCH)
+        noise_unscaled = torch.rand(self.x_orig.shape)
+        if eps_norm == 'inf':
+            # Workaround as PyTorch doesn't have elementwise clip
+            norm_scale = torch.ones_like(noise_unscaled[0]).norm(float('inf'))
+        else:
+            norm_scale = torch.ones_like(noise_unscaled[0]).norm(eps_norm)                                                          
+        noise_scaled = (noise_unscaled*eps/norm_scale).cuda()
+        
+        self.x_adv = Variable(self.x_orig+noise_scaled, requires_grad=True)
         
         for i in range(iteration):
             
@@ -314,22 +335,25 @@ class Adv_NN(Personalized_NN):
 
             self.x_adv.grad.sign_()
             self.x_adv = self.x_adv - alpha*self.x_adv.grad
-            # self.x_adv = where(self.x_adv > self.x_orig+eps, self.x_orig+eps, self.x_adv)
-            # self.x_adv = where(self.x_adv < self.x_orig-eps, self.x_orig-eps, self.x_adv)
             
-            delta = self.x_adv - self.x_orig
+            
+            if eps_norm == 'inf':
+                # Workaround as PyTorch doesn't have elementwise clip
+                self.x_adv = torch.max(torch.min(self.x_adv, self.x_orig + eps), self.x_orig - eps)
+            else: # Other norms (mostly 2 norm)
+                delta = self.x_adv - self.x_orig
 
-            # Assume x and x_adv are batched tensors where the first dimension is
-            # a batch dimension
-            mask = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1) <= eps
+                # Assume x and x_adv are batched tensors where the first dimension is
+                # a batch dimension
+                mask = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1) <= eps
 
-            scaling_factor = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1)
-            scaling_factor[mask] = eps
+                scaling_factor = delta.view(delta.shape[0], -1).norm(eps_norm, dim=1)
+                scaling_factor[mask] = eps
 
-            # .view() assumes batched images as a 4D Tensor
-            delta *= eps / scaling_factor.view(-1, 1, 1, 1)
+                # .view() assumes batched images as a 4D Tensor
+                delta *= eps / scaling_factor.view(-1, 1, 1, 1)
 
-            self.x_adv = self.x_orig + delta
+                self.x_adv = self.x_orig + delta
             
             self.x_adv = torch.clamp(self.x_adv, x_val_min, x_val_max)
             self.x_adv = Variable(self.x_adv.data, requires_grad=True)
