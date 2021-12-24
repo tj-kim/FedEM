@@ -44,6 +44,7 @@ CLIENT_TYPE = {
     "local": "normal",
     "pFedMe": "normal",
     "clustered": "normal",
+    "FedEM_adv": "FedEM_adv"
 }
 
 SHAKESPEARE_CONFIG = {

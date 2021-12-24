@@ -3,6 +3,15 @@ import torch.nn.functional as F
 from copy import deepcopy
 from utils.torch_utils import *
 
+from transfer_attacks.Personalized_NN import *
+from transfer_attacks.Params import *
+from transfer_attacks.Transferer import *
+from transfer_attacks.Args import *
+from transfer_attacks.utils import *
+
+from transfer_attacks.Boundary_Transferer import *
+from transfer_attacks.projected_gradient_descent import *
+
 
 class Client(object):
     r"""Implements one clients
@@ -247,3 +256,124 @@ class FFLClient(Client):
             hs += torch.pow(client_loss, self.q) / lr
 
         return hs / len(self.learners_ensemble)
+
+
+class Adv_MixtureClient(MixtureClient):
+    """ 
+    ADV client with more params -- use to PGD generate data between rounds
+    """
+    def __init__(
+            self,
+            learners_ensemble,
+            train_iterator,
+            val_iterator,
+            test_iterator,
+            logger,
+            local_steps,
+            tune_locally=False,
+            adv_proportion=0,
+            atk_params = None
+    ):
+        super(Adv_MixtureClient, self).__init__(
+            learners_ensemble=learners_ensemble,
+            train_iterator=train_iterator,
+            val_iterator=val_iterator,
+            test_iterator=test_iterator,
+            logger=logger,
+            local_steps=local_steps,
+            tune_locally=tune_locally
+        )
+
+        self.adv_proportion = adv_proportion
+        self.atk_params = atk_params
+        
+        # Make copy of dataset and set aside for adv training
+        self.og_dataloader = copy.deepcopy(self.train_iterator) # Update self.train_loader every iteration
+        
+        # Add adversarial client 
+        combined_model = self.combine_learners_ensemble()
+        altered_dataloader = self.gen_customdataloader(self.og_dataloader)
+        self.adv_nn = Adv_NN(combined_model, altered_dataloader)
+        
+    def gen_customdataloader(self, og_dataloader):
+        # Combine Validation Data across all clients as test
+        data_x = []
+        data_y = []
+
+        for (x,y,idx) in og_dataloader.dataset:
+            data_x.append(x)
+            data_y.append(y)
+
+        data_x = torch.stack(data_x)
+        data_y = torch.stack(data_y)
+        dataloader = Custom_Dataloader(data_x, data_y)
+        
+        return dataloader
+    
+    def combine_learners_ensemble(self):
+
+        # This is where the models are stored -- one for each mixture --> learner.model for nn
+        hypotheses = self.learners_ensemble.learners
+
+        # obtain the state dict for each of the weights 
+        weights_h = []
+
+        model_weights = self.learners_ensemble.learners_weights
+        
+        for h in hypotheses:
+            weights_h += [h.model.state_dict()]
+        
+        # first make the model with empty weights
+        new_model = copy.deepcopy(hypotheses[0].model)
+        new_model.eval()
+        new_weight_dict = copy.deepcopy(weights_h[0])
+        for key in weights_h[0]:
+            htemp = model_weights[0]*weights_h[0][key]
+            for i in range(1,len(model_weights)):
+                htemp+=model_weights[i]*weights_h[i][key]
+            new_weight_dict[key] = htemp
+        new_model.load_state_dict(new_weight_dict)
+        
+        return new_model
+    
+    def update_advnn(self):
+        # reassign weights after trained
+        self.adv_nn = self.combine_learnes_ensemble()
+        return
+    
+    def generate_adversarial_data(self):
+        # Generate adversarial datapoints while recognizing idx of sampled without replacement
+        
+        # Draw random idx without replacement 
+        num_datapoints = self.train_iterator.dataset.targets.shape[0]
+        sample_size = int(np.ceil(num_datapoints * self.adv_proportion))
+        sample = np.random.choice(a=num_datapoints, size=sample_size)
+        x_data = self.adv_nn.dataloader.x_data[sample]
+        y_data = self.adv_nn.dataloader.y_data[sample]
+        
+        self.adv_nn.pgd_sub(self.atk_params, x_data.cuda(), y_data.cuda())
+        x_adv = self.adv_nn.x_adv
+        
+        return sample, x_adv
+    
+    def assign_advdataset(self):
+        # convert dataset to normed and replace specific datapoints
+        
+        # Flush current used dataset with original
+        self.train_iterator = copy.deepcopy(self.og_dataloader)
+        
+        # adversarial datasets loop, adjust normed and push 
+        sample_id, x_adv = self.generate_adversarial_data()
+        
+        for i in range(sample_id.shape[0]):
+            idx = sample_id[i]
+            x_val_normed = x_adv[i]
+            x_val_unnorm = unnormalize_cifar10(x_val_normed)
+        
+            self.train_iterator.dataset.data[idx] = x_val_unnorm
+        
+        self.train_loader = iter(self.train_iterator)
+        
+        return
+    
+    

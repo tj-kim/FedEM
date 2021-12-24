@@ -309,6 +309,8 @@ def get_client(
         logger,
         local_steps,
         tune_locally,
+        adv_proportion=0,
+        atk_params = None
 ):
     """
 
@@ -354,6 +356,18 @@ def get_client(
             local_steps=local_steps,
             tune_locally=tune_locally,
             q=q
+        )
+    elif client_type == "FedEM_adv":
+        return Adv_MixtureClient(
+            learners_ensemble=learners_ensemble,
+            train_iterator=train_iterator,
+            val_iterator=val_iterator,
+            test_iterator=test_iterator,
+            logger=logger,
+            local_steps=local_steps,
+            tune_locally=tune_locally,
+            adv_proportion= adv_proportion,
+            atk_params = atk_params
         )
     else:
         return Client(
