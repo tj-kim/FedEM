@@ -1,4 +1,4 @@
-from numpy import random
+import random
 
 # Write a Custom Class for Dataloader that has flexible batch size
 class Custom_Dataloader:
