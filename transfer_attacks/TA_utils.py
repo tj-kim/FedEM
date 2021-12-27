@@ -86,7 +86,9 @@ def where(cond, x, y):
     cond = cond.float()
     return (cond*x) + ((1-cond)*y)
 
-def dummy_aggregator(args_):
+
+
+def dummy_aggregator(args_, num_user=80):
 
     torch.manual_seed(args_.seed)
 
@@ -98,18 +100,22 @@ def dummy_aggregator(args_):
         logs_root = os.path.join("logs", args_to_string(args_))
 
     print("==> Clients initialization..")
-    clients = init_clients(
+    clients_temp = init_clients(
         args_,
         root_path=os.path.join(data_dir, "train"),
         logs_root=os.path.join(logs_root, "train")
     )
 
+    clients = clients_temp[:num_user]
+    
     print("==> Test Clients initialization..")
-    test_clients = init_clients(
+    test_clients_temp = init_clients(
         args_,
         root_path=os.path.join(data_dir, "test"),
         logs_root=os.path.join(logs_root, "test")
     )
+    
+    test_clients = test_clients_temp[:num_user]
 
     logs_path = os.path.join(logs_root, "train", "global")
     os.makedirs(logs_path, exist_ok=True)
@@ -161,37 +167,59 @@ def dummy_aggregator(args_):
 
     return aggregator, clients
 
-# Write a Custom Class for Dataloader that has flexible batch size
-class Custom_Dataloader:
-    def __init__(self, x_data, y_data):
-        self.x_data = x_data # Tensor + cuda
-        self.y_data = y_data # Tensor + cuda
-        
-    def load_batch(self,batch_size,mode = 'test'):
-        samples = random.sample(range(self.y_data.shape[0]),batch_size)
-        out_x_data = self.x_data[samples].to(device='cuda')
-        out_y_data = self.y_data[samples].to(device='cuda')
-        
-        return out_x_data, out_y_data
-    
-    def select_single(self):
-        sample_idx = random.sample(range(self.y_data.shape[0]),1)
-        x_point = self.x_data[sample_idx].to(device='cuda')
-        y_point = self.y_data[sample_idx].to(device='cuda')
-        
-        return sample_idx, x_point, y_point
-    
-# CIFAR10 dataset unnormalize as it comes out of the iter
-def unnormalize_cifar10(normed):
+# ADV functions
 
-    mean = torch.tensor([0.4914, 0.4822, 0.4465])
-    std = torch.tensor([0.2023, 0.1994, 0.201])
-
-    unnormalize = Normalize((-mean / std).tolist(), (1.0 / std).tolist())
-    a = unnormalize(normed)
-    a = a.transpose(0,1)
-    a = a.transpose(1,2)
-    a = a * 255
-    b = a.clone().detach().requires_grad_(True).type(torch.uint8)
+# Solve for Fu for all users
+def solve_proportions(G, N, num_h, Du, Whu, S, Ru, step_size):
+    """
+    Inputs:
+    - G - Desired proportion of adv data points
+    - N - Number of users in the system
+    - num_h - Number of mixtures/hypotheses (FedEM)
+    - Du - Number of data points at user U
+    - Whu - Weight of each hypothis at user U
+    - S - Threshold for objective function to fall below
+    - Ru - Resource limits at each user (proportion)
+    - step_size - For sweeping Fu
+    Output:
+    - Fu - proportion of adv data for each client
+    """
     
-    return b
+    # finalize information needed to solve problem
+    Wh = np.sum(Whu,axis=0)/N
+    D = np.sum(Du)
+
+    Fu = np.ones_like(Ru) * G
+
+    # Step 1. Initial filter out all users with less resource constraints
+    A = np.where(Fu>Ru)[0]
+    B = np.where(Fu<Ru)[0]
+    Fu[A] = Ru[A]
+
+    # Step 2. Select users at random and change proportion, check objective 
+    np.random.shuffle(B)
+    for i in B:
+        curr_obj = calc_prop_objective(G, num_h, Du, Whu, Fu)
+        while Fu[i] + step_size < Ru[i]:
+            Fu_temp = copy.deepcopy(Fu)
+            Fu_temp[i] = Fu[i] + step_size
+            new_obj = calc_prop_objective(G, num_h, Du, Whu, Fu_temp)
+            if new_obj <= S:
+                Fu = Fu_temp
+                break
+            elif new_obj < curr_obj:
+                Fu = Fu_temp
+                curr_obj = new_obj
+            else: break
+                
+    return Fu
+
+def calc_prop_objective(G, num_h, Du, Whu, Fu):
+# Calculate objective function value for attaining global adv data proportion
+    N = Whu.shape[0]
+    Wh = np.sum(Whu,axis=0)/N
+    obj = 0
+    D = np.sum(Du)
+    for n in range(num_h):    
+        obj += np.abs(np.sum(Fu * Du * Whu[:,n])- G * D * Wh[n]) * 1/D
+    return obj

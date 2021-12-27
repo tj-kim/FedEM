@@ -309,8 +309,6 @@ def get_client(
         logger,
         local_steps,
         tune_locally,
-        adv_proportion=0,
-        atk_params = None
 ):
     """
 
@@ -365,9 +363,7 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally,
-            adv_proportion= adv_proportion,
-            atk_params = atk_params
+            tune_locally=tune_locally
         )
     else:
         return Client(

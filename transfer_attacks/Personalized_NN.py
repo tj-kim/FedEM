@@ -14,7 +14,7 @@ import pickle
 from torch.autograd import Variable
 import copy
 
-from transfer_attacks.utils import *
+# from transfer_attacks.TA_utils import *
 from transfer_attacks.projected_gradient_descent import *
 
 class Personalized_NN(nn.Module):

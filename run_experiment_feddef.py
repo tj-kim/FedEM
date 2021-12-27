@@ -32,23 +32,20 @@ from transfer_attacks.Personalized_NN import *
 from transfer_attacks.Params import *
 from transfer_attacks.Transferer import *
 from transfer_attacks.Args import *
-from transfer_attacks.utils import *
-
-from transfer_attacks.Boundary_Transferer import *
-from transfer_attacks.projected_gradient_descent import *
+from transfer_attacks.TA_utils import *
 
 if __name__ == "__main__":
     
     # Manually set argument parameters
     args_ = Args()
     args_.experiment = "cifar10"
-    args_.method = "FedEM"
+    args_.method = "FedEM_adv"
     args_.decentralized = False
     args_.sampling_rate = 1.0
     args_.input_dimension = None
     args_.output_dimension = None
     args_.n_learners= 3
-    args_.n_rounds = 10
+    args_.n_rounds = 201
     args_.bz = 128
     args_.local_steps = 1
     args_.lr_lambda = 0
@@ -63,86 +60,82 @@ if __name__ == "__main__":
     args_.locally_tune_clients = False
     args_.seed = 1234
     args_.verbose = 1
-    args_.save_path = 'weights/cifar/21_09_28_first_transfers/'
+    args_.save_path = 'weights/cifar/21_12_27_feddef1_n40/'
     args_.validation = False
-
-    data_save_path = 'adv_data/cifar/21_12_01_from_21_09_28_first_transfers/'
     
+    # Other Argument Parameters
+    Q = 10 # update per round
+    G = 0.5
+    num_clients = 40
+    S = 0.05 # Threshold
+    step_size = 0.01
+    K = 10
+
+    # Randomized Parameters
+    Ru = np.random.uniform(low=0.2, high=0.8, size=num_clients)
+
     # Generate the dummy values here
-    aggregator, clients = dummy_aggregator(args_)
-    # Import weights for aggregator
-    aggregator.load_state(args_.save_path)
-    
-    # Generate attacker --> load weights, load vals, attack
-    # This is where the models are stored -- one for each mixture --> learner.model for nn
-    hypotheses = aggregator.global_learners_ensemble.learners
+    aggregator, clients = dummy_aggregator(args_, num_clients)
 
-    # obtain the state dict for each of the weights 
-    weights_h = []
+    # Set attack parameters
+    x_min = torch.min(clients[0].adv_nn.dataloader.x_data)
+    x_max = torch.max(clients[0].adv_nn.dataloader.x_data)
+    atk_params = PGD_Params()
+    atk_params.set_params(batch_size=1, iteration = K,
+                       target = -1, x_val_min = x_min, x_val_max = x_max,
+                       step_size = 0.05, step_norm = "inf", eps = 1, eps_norm = "inf")
 
-    for h in hypotheses:
-        weights_h += [h.model.state_dict()]
-    
-    # Set model weights
-    weights = np.load(args_.save_path + "/train_client_weights.npy")
-    # np.set_printoptions(formatter={'float': lambda x: "{0:0.2f}".format(x)})
+    # Obtain the central controller decision making variables (static)
+    num_h = args_.n_learners= 3
+    Du = np.zeros(len(clients))
 
-    model_weights = []
-    num_models = len(clients)
+    for i in range(len(clients)):
+        num_data = clients[i].train_iterator.dataset.targets.shape[0]
+        Du[i] = num_data
+    D = np.sum(Du) # Total number of data points
 
-    for i in range(num_models):
-        model_weights += [weights[i]]
 
-    # Generate the weights to test on as linear combinations of the model_weights
-    models_test = []
+    # Train the model
+    print("Training..")
+    pbar = tqdm(total=args_.n_rounds)
+    current_round = 0
+    while current_round <= args_.n_rounds:
 
-    for (w0,w1,w2) in model_weights:
-        # first make the model with empty weights
-        new_model = copy.deepcopy(hypotheses[0].model)
-        new_model.eval()
-        new_weight_dict = copy.deepcopy(weights_h[0])
-        for key in weights_h[0]:
-            new_weight_dict[key] = w0*weights_h[0][key] + w1*weights_h[1][key] + w2*weights_h[2][key]
-        new_model.load_state_dict(new_weight_dict)
-        models_test += [new_model]
-        
-    # Save trainerloader to each of the pkl file based on client
-    for i in range(len(models_test)):
-        print("attacking client",i)
-        #xdata = aggregator.clients[i].train_iterator.dataset.data
-        # ydata = aggregator.clients[i].train_iterator.dataset.targets
-        
-    
-        data_x = []
-        data_y = []
+        # If statement catching every Q rounds -- update dataset
+        if  current_round != 0 and current_round%Q == 0: # 
+            # print("Round:", current_round, "Calculation Adv")
+            # Obtaining hypothesis information
+            Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
+            for i in range(len(clients)):
+                # print("client", i)
+                temp_client = aggregator.clients[i]
+                hyp_weights = temp_client.learners_ensemble.learners_weights
+                Whu[i] = hyp_weights
 
-        daniloader = clients[i].train_iterator
-        for (x,y,idx) in daniloader.dataset:
-            data_x.append(x)
-            data_y.append(y)
+            row_sums = Whu.sum(axis=1)
+            Whu = Whu / row_sums[:, np.newaxis]
+            Wh = np.sum(Whu,axis=0)/num_clients
 
-        xdata = torch.stack(data_x)
-        ydata = torch.stack(data_y)
-        cdloader = Custom_Dataloader(xdata,ydata)
-    
-        # Attack parameters
-        atk_params = PGD_Params()
-        atk_params.set_params(batch_size=500, iteration = 30,
-                       target = 9, x_val_min = torch.min(xdata), x_val_max = torch.max(xdata),
-                       step_size = 0.05, step_norm = "inf", eps = 4.5, eps_norm = 2)
+            # Solve for adversarial ratio at every client
+            Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
+            print(Fu)
 
-        now_network = Adv_NN(models_test[i], cdloader)
-        now_network.pgd_sub(atk_params=atk_params, x_in=xdata, y_in=ydata, x_base = None)
+            # Assign proportion and attack params
+            # Assign proportion and compute new dataset
+            for i in range(len(clients)):
+                aggregator.clients[i].set_adv_params(Fu[i], atk_params)
+                aggregator.clients[i].update_advnn()
+                aggregator.clients[i].assign_advdataset()
 
-        
-        xadv_temp = now_network.x_adv
-        
-        now_network.forward_transfer(x_orig = xdata.cuda(), x_adv  = xadv_temp.cuda(), y_orig = ydata.cuda(), y_adv = ydata.cuda(),
-                         true_labels = ydata.cuda(), target = atk_params.target, print_info = False)
-        
-        print("ADV Hit Rate:", now_network.adv_target_achieve)
-        # Pickle Save
-        name_cdloader = data_save_path + "client_" + str(i) + ".p"
-        new_cdloader = Custom_Dataloader(xadv_temp, ydata)
-        pickle.dump( new_cdloader, open( name_cdloader, "wb" ) )
-        
+        aggregator.mix()
+
+        if aggregator.c_round != current_round:
+            pbar.update(1)
+            current_round = aggregator.c_round
+
+    if "save_path" in args_:
+        save_root = os.path.join(args_.save_path)
+
+        os.makedirs(save_root, exist_ok=True)
+        aggregator.save_state(save_root)
+            

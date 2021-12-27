@@ -4,13 +4,16 @@ from copy import deepcopy
 from utils.torch_utils import *
 
 from transfer_attacks.Personalized_NN import *
-from transfer_attacks.Params import *
-from transfer_attacks.Transferer import *
-from transfer_attacks.Args import *
-from transfer_attacks.utils import *
+# from transfer_attacks.Params import *
+# from transfer_attacks.Transferer import *
+# from transfer_attacks.Args import *
+# from transfer_attacks.TA_utils import *
 
-from transfer_attacks.Boundary_Transferer import *
-from transfer_attacks.projected_gradient_descent import *
+# from transfer_attacks.Boundary_Transferer import *
+# from transfer_attacks.projected_gradient_descent import *
+
+from transfer_attacks.Custom_Dataloader import *
+from transfer_attacks.unnormalize import *
 
 
 class Client(object):
@@ -270,9 +273,7 @@ class Adv_MixtureClient(MixtureClient):
             test_iterator,
             logger,
             local_steps,
-            tune_locally=False,
-            adv_proportion=0,
-            atk_params = None
+            tune_locally=False
     ):
         super(Adv_MixtureClient, self).__init__(
             learners_ensemble=learners_ensemble,
@@ -284,17 +285,21 @@ class Adv_MixtureClient(MixtureClient):
             tune_locally=tune_locally
         )
 
-        self.adv_proportion = adv_proportion
-        self.atk_params = atk_params
+        self.adv_proportion = 0
+        self.atk_params = None
         
         # Make copy of dataset and set aside for adv training
-        self.og_dataloader = copy.deepcopy(self.train_iterator) # Update self.train_loader every iteration
+        self.og_dataloader = deepcopy(self.train_iterator) # Update self.train_loader every iteration
         
         # Add adversarial client 
         combined_model = self.combine_learners_ensemble()
-        altered_dataloader = self.gen_customdataloader(self.og_dataloader)
-        self.adv_nn = Adv_NN(combined_model, altered_dataloader)
-        
+        self.altered_dataloader = self.gen_customdataloader(self.og_dataloader)
+        self.adv_nn = Adv_NN(combined_model, self.altered_dataloader)
+    
+    def set_adv_params(self, adv_proportion = 0, atk_params = None):
+        self.adv_proportion = adv_proportion
+        self.atk_params = atk_params
+    
     def gen_customdataloader(self, og_dataloader):
         # Combine Validation Data across all clients as test
         data_x = []
@@ -324,9 +329,9 @@ class Adv_MixtureClient(MixtureClient):
             weights_h += [h.model.state_dict()]
         
         # first make the model with empty weights
-        new_model = copy.deepcopy(hypotheses[0].model)
+        new_model = deepcopy(hypotheses[0].model)
         new_model.eval()
-        new_weight_dict = copy.deepcopy(weights_h[0])
+        new_weight_dict = deepcopy(weights_h[0])
         for key in weights_h[0]:
             htemp = model_weights[0]*weights_h[0][key]
             for i in range(1,len(model_weights)):
@@ -338,7 +343,7 @@ class Adv_MixtureClient(MixtureClient):
     
     def update_advnn(self):
         # reassign weights after trained
-        self.adv_nn = self.combine_learnes_ensemble()
+        self.adv_nn = Adv_NN(self.combine_learners_ensemble(), self.altered_dataloader)
         return
     
     def generate_adversarial_data(self):
@@ -360,7 +365,7 @@ class Adv_MixtureClient(MixtureClient):
         # convert dataset to normed and replace specific datapoints
         
         # Flush current used dataset with original
-        self.train_iterator = copy.deepcopy(self.og_dataloader)
+        self.train_iterator = deepcopy(self.og_dataloader)
         
         # adversarial datasets loop, adjust normed and push 
         sample_id, x_adv = self.generate_adversarial_data()

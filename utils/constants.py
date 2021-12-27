@@ -30,7 +30,8 @@ AGGREGATOR_TYPE = {
     "APFL": "APFL",
     "L2SGD": "L2SGD",
     "AFL": "AFL",
-    "FFL": "FFL"
+    "FFL": "FFL",
+    "FedEM_adv": "centralized"
 }
 
 CLIENT_TYPE = {
