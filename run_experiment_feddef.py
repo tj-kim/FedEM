@@ -60,7 +60,7 @@ if __name__ == "__main__":
     args_.locally_tune_clients = False
     args_.seed = 1234
     args_.verbose = 1
-    args_.save_path = 'weights/cifar/21_12_27_feddef1_n40/'
+    args_.save_path = 'weights/cifar/21_12_30_feddef2_n40_linf0_5/'
     args_.validation = False
     
     # Other Argument Parameters
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     atk_params = PGD_Params()
     atk_params.set_params(batch_size=1, iteration = K,
                        target = -1, x_val_min = x_min, x_val_max = x_max,
-                       step_size = 0.05, step_norm = "inf", eps = 1, eps_norm = "inf")
+                       step_size = 0.05, step_norm = "inf", eps = 0.5, eps_norm = "inf")
 
     # Obtain the central controller decision making variables (static)
     num_h = args_.n_learners= 3
@@ -138,4 +138,5 @@ if __name__ == "__main__":
 
         os.makedirs(save_root, exist_ok=True)
         aggregator.save_state(save_root)
-            
+    
+    

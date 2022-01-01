@@ -245,7 +245,8 @@ class Boundary_Transferer():
         if target and (self.y_comparison is not None):
             self.atk_params.target = self.y_comparison
         
-        self.advNN.i_fgsm_sub(self.atk_params,x_in.unsqueeze(0),y_in.unsqueeze(0))
+        # 1.1.22 Changed from ifsgm sub to pgd sub)
+        self.advNN.pgd_sub(self.atk_params,x_in.unsqueeze(0),y_in.unsqueeze(0))
         
         x_adv = self.advNN.x_adv
         dist_diff = torch.subtract(x_adv, x_in)
