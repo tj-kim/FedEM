@@ -39,10 +39,12 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['22_01_01_feddef_n40_linf0_5_G0_5_R0_1/','22_01_01_feddef_n40_linf0_5_G0_5_R0_2/',
-                 '22_01_01_feddef_n40_linf0_5_G0_5_R0_4/','22_01_01_feddef_n40_linf0_5_G0_5_R0_6/']
+    exp_names = ['22_01_07_feddef_n40_linf0_5_G0_0_R1_0_Q10_eps0_1_hyp1/',
+                 '22_01_07_feddef_n40_linf0_5_G0_5_R1_0_Q10_eps0_1_hyp1/',
+                 '22_01_07_feddef_n40_linf0_5_G1_0_R1_0_Q10_eps0_1_hyp1/']
     
-    R_val = [0.1,0.2,0.4,0.6]
+    G_val = [0,0.5,1.0]
+    n_learners = 1
     
     for itt in range(len(exp_names)):
         
@@ -56,7 +58,7 @@ if __name__ == "__main__":
         args_.sampling_rate = 1.0
         args_.input_dimension = None
         args_.output_dimension = None
-        args_.n_learners= 3
+        args_.n_learners= n_learners
         args_.n_rounds = 201
         args_.bz = 128
         args_.local_steps = 1
@@ -77,15 +79,17 @@ if __name__ == "__main__":
 
         # Other Argument Parameters
         Q = 10 # update per round
-        G = 0.5
+        G = G_val[itt]
         num_clients = 40
         S = 0.05 # Threshold
         step_size = 0.01
         K = 10
+        eps = 0.1
 
         # Randomized Parameters
-        Ru = np.random.uniform(low=R_val[itt]-0.1, high=R_val[itt]+0.1, size=num_clients)
-
+        # Ru = np.random.uniform(low=R_val[itt]-0.1, high=R_val[itt]+0.1, size=num_clients)
+        Ru = np.ones(num_clients)
+        
         # Generate the dummy values here
         aggregator, clients = dummy_aggregator(args_, num_clients)
 
@@ -95,7 +99,7 @@ if __name__ == "__main__":
         atk_params = PGD_Params()
         atk_params.set_params(batch_size=1, iteration = K,
                            target = -1, x_val_min = x_min, x_val_max = x_max,
-                           step_size = 0.05, step_norm = "inf", eps = 0.5, eps_norm = "inf")
+                           step_size = 0.05, step_norm = "inf", eps = eps, eps_norm = "inf")
 
         # Obtain the central controller decision making variables (static)
         num_h = args_.n_learners= 3

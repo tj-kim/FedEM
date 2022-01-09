@@ -83,7 +83,7 @@ class Personalized_NN(nn.Module):
         
     
     def forward_transfer(self, x_orig, x_adv, y_orig, y_adv,
-                         true_labels, target, print_info = False):
+                         true_labels, target, transfer_diag = True, print_info = False):
         """
         Assume that input images are in pytorch tensor format
         """
@@ -103,13 +103,24 @@ class Personalized_NN(nn.Module):
         
         # Record Different Parameters
         self.orig_test_acc = (h_orig_category == true_labels).float().sum()/batch_size
-        self.adv_test_acc = (h_adv_category == true_labels).float().sum()/batch_size
+        self.adv_test_acc = (h_adv_category == true_labels).float().sum()/batch_size # alter
         
         self.orig_output_sim = (h_orig_category == y_orig).float().sum()/batch_size
         self.adv_output_sim = (h_adv_category == y_adv).float().sum()/batch_size
         
         self.orig_target_achieve = (h_orig_category == target).float().sum()/batch_size
-        self.adv_target_achieve = (h_adv_category == target).float().sum()/batch_size
+        self.adv_target_achieve = (h_adv_category == target).float().sum()/batch_size # alter
+        
+        if transfer_diag and target > -1:
+            # adv test acc
+            true_label_idx = true_labels != target
+            h_adv_conditioned = h_adv_category[true_label_idx]
+            true_labels_conditioned = true_labels[true_label_idx]
+            new_batch_size = true_labels_conditioned.shape[0]
+            self.adv_test_acc = (h_adv_conditioned == true_labels_conditioned).float().sum()/new_batch_size
+            
+            # adv target achieve
+            self.adv_target_achieve = (h_adv_conditioned == target).float().sum()/new_batch_size
         
         # Record based on indices
         self.adv_indices = h_adv_category == target
