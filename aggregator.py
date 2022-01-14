@@ -224,6 +224,31 @@ class Aggregator(ABC):
                 weights[client_id] = client.learners_ensemble.learners_weights
 
             np.save(save_path, weights)
+            
+    def save_state_intermed(self, dir_path, round_no):
+        """
+        save intermediate state with round number
+        """
+        for learner_id, learner in enumerate(self.global_learners_ensemble):
+            temp_str = f"chkpts_{learner_id}_r" + str(round_no)+ ".pt"
+            save_path = os.path.join(dir_path, temp_str)
+            torch.save(learner.model.state_dict(), save_path)
+
+        learners_weights = np.zeros((self.n_clients, self.n_learners))
+        test_learners_weights = np.zeros((self.n_test_clients, self.n_learners))
+
+        for mode, weights, clients in [
+            ['train', learners_weights, self.clients],
+            ['test', test_learners_weights, self.test_clients]
+        ]:
+            temp_str = f"{mode}_client_weights_r" + str(round_no) + ".npy"
+            save_path = os.path.join(dir_path, temp_str)
+
+            for client_id, client in enumerate(clients):
+                weights[client_id] = client.learners_ensemble.learners_weights
+
+            np.save(save_path, weights)
+
 
     def load_state(self, dir_path):
         """

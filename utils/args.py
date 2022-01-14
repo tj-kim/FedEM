@@ -180,6 +180,12 @@ def parse_args(args_list=None):
         type=int,
         default=1234
     )
+    parser.add_argument(
+        "--save_freq",
+        help='save model per round',
+        type=int,
+        default=10
+    )
 
     if args_list:
         args = parser.parse_args(args_list)
