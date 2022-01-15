@@ -214,6 +214,35 @@ def solve_proportions(G, N, num_h, Du, Whu, S, Ru, step_size):
                 
     return Fu
 
+# Solve for Fu for all users
+def solve_proportions_dummy(G, N, num_h, Du, Whu, S, Ru, step_size):
+    """
+    Inputs:
+    - G - Desired proportion of adv data points
+    - N - Number of users in the system
+    - num_h - Number of mixtures/hypotheses (FedEM)
+    - Du - Number of data points at user U
+    - Whu - Weight of each hypothis at user U
+    - S - Threshold for objective function to fall below
+    - Ru - Resource limits at each user (proportion)
+    - step_size - For sweeping Fu
+    Output:
+    - Fu - proportion of adv data for each client
+    """
+    
+    # finalize information needed to solve problem
+    Wh = np.sum(Whu,axis=0)/N
+    D = np.sum(Du)
+
+    Fu = np.ones_like(Ru) * G
+
+    # Step 1. Initial filter out all users with less resource constraints
+    A = np.where(Fu>Ru)[0]
+    B = np.where(Fu<Ru)[0]
+    Fu[A] = Ru[A]
+                
+    return Fu
+
 def calc_prop_objective(G, num_h, Du, Whu, Fu):
 # Calculate objective function value for attaining global adv data proportion
     N = Whu.shape[0]
