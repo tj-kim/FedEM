@@ -39,7 +39,11 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['no_macro_resources', 'yes_macro_resources']
+    exp_names = ['local_defend', 'fed_avg_defend','fedem_defend']
+    exp_method = ['local_adv','FedAvg_adv','FedEM_adv']
+    exp_num_learners = [1,1,3]
+    exp_lr = [0.03, 0.01, 0.03]
+    
         
     for itt in range(len(exp_names)):
         
@@ -48,17 +52,17 @@ if __name__ == "__main__":
         # Manually set argument parameters
         args_ = Args()
         args_.experiment = "cifar10"
-        args_.method = "FedEM_adv"
+        args_.method = exp_method[itt]
         args_.decentralized = False
         args_.sampling_rate = 1.0
         args_.input_dimension = None
         args_.output_dimension = None
-        args_.n_learners= 1
+        args_.n_learners= exp_num_learners[itt]
         args_.n_rounds = 201
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
-        args_.lr =0.03
+        args_.lr = exp_lr[itt]
         args_.lr_scheduler = 'multi_step'
         args_.log_freq = 10
         args_.device = 'cuda'
@@ -69,7 +73,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/final/cifar/fig2/' + exp_names[itt]
+        args_.save_path = 'weights/final/cifar/fig3/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 10
 
@@ -83,8 +87,8 @@ if __name__ == "__main__":
         eps = 0.1
 
         # Randomized Parameters
-        Ru = np.random.uniform(0, 0.5, size=num_clients)
-        # Ru = np.ones(num_clients)
+        # Ru = np.random.uniform(0, 0.5, size=num_clients)
+        Ru = np.ones(num_clients)
         
         # Generate the dummy values here
         aggregator, clients = dummy_aggregator(args_, num_clients)

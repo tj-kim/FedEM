@@ -31,7 +31,9 @@ AGGREGATOR_TYPE = {
     "L2SGD": "L2SGD",
     "AFL": "AFL",
     "FFL": "FFL",
-    "FedEM_adv": "centralized"
+    "FedEM_adv": "centralized",
+    "FedAvg_adv": "centralized",
+    "local_adv": "no_communication",
 }
 
 CLIENT_TYPE = {
@@ -45,7 +47,9 @@ CLIENT_TYPE = {
     "local": "normal",
     "pFedMe": "normal",
     "clustered": "normal",
-    "FedEM_adv": "FedEM_adv"
+    "FedEM_adv": "FedEM_adv",
+    "FedAvg_adv": "normal_adv",
+    "local_adv": "normal_adv",
 }
 
 SHAKESPEARE_CONFIG = {
