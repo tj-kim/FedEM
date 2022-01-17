@@ -252,3 +252,48 @@ def calc_prop_objective(G, num_h, Du, Whu, Fu):
     for n in range(num_h):    
         obj += np.abs(np.sum(Fu * Du * Whu[:,n])- G * D * Wh[n]) * 1/D
     return obj
+
+# Perform np.mean without the diagonal
+def avg_nondiag(array2d):
+    d1 = array2d.shape[0]
+    d2 = array2d.shape[1]
+    
+    counter = 0
+    val = 0
+    
+    for i1 in range(d1):
+        for i2 in range(d2):
+            if i1 != i2:
+                counter+=1
+                val += array2d[i1,i2]
+    
+    return val/counter
+
+# Make a pandas table across double sweep from list
+def make_metric_table(exp_list, metric, row_names, col_names, avg_diag_flag = True):
+    
+    num_col1 = len(exp_list)
+    num_col2 = len(exp_list[0])
+    num_victims = len(exp_list[0][0])
+    victim_idxs = range(num_victims)
+    exp_values = {}
+    
+    final_table = np.zeros([num_col1, num_col2])
+    
+    for j in range(num_col1): # Attack perturbation amount
+        for k in range(num_col2): # Defense perturbation amount (Experiment)
+            orig_vals = np.zeros([num_victims, num_victims])
+            
+            for adv_idx in range(num_victims):
+                for victim in range(num_victims):
+                    curr_list = exp_list[j][k]
+                    orig_vals[adv_idx,victim] = curr_list[victim_idxs[adv_idx]][metric][victim_idxs[victim]].data.tolist()
+            
+            if avg_diag_flag:
+                final_table[j,k] = avg_nondiag(orig_vals)
+            else:
+                final_table[j,k] = np.mean(orig_vals)
+    
+    df = pd.DataFrame(final_table, columns = col_names, index = row_names)
+    
+    return df
