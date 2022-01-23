@@ -308,7 +308,8 @@ class Adv_NN(Personalized_NN):
         # Load data to perturb
     
         data_x, data_y = self.dataloader.load_batch(batch_size, mode=mode)
-        self.x_orig  = data_x.reshape(batch_size,3,32,32)
+        
+        self.x_orig  = data_x.reshape(batch_size, data_x.shape[1],data_x.shape[2],data_x.shape[3])
         self.y_orig = data_y.type(torch.LongTensor)
         
         if torch.cuda.is_available():

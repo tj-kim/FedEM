@@ -39,66 +39,62 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['no_macro_resources', 'yes_macro_resources']
-    # exp_names = ['yes_macro_resources']
-    # print(exp_names[0])
-        
-    # Manually set argument parameters
-    args_ = Args()
-    args_.experiment = "cifar10"
-    args_.method = "FedEM_adv"
-    args_.decentralized = False
-    args_.sampling_rate = 1.0
-    args_.input_dimension = None
-    args_.output_dimension = None
-    args_.n_learners= 3
-    args_.n_rounds = 201
-    args_.bz = 128
-    args_.local_steps = 1
-    args_.lr_lambda = 0
-    args_.lr =0.03
-    args_.lr_scheduler = 'multi_step'
-    args_.log_freq = 10
-    args_.device = 'cuda'
-    args_.optimizer = 'sgd'
-    args_.mu = 0
-    args_.communication_probability = 0.1
-    args_.q = 1
-    args_.locally_tune_clients = False
-    args_.seed = 1234
-    args_.verbose = 1
-    args_.validation = False
-    args_.save_freq = 10
+#     exp_names = ['FedEMadv_G0_25/',
+#                  'FedEMadv_G0_75/',
+#                  'FedEMadv_G1/']
 
-            # Other Argument Parameters
-    Q = 10 # update per round
-    G = 0.15
-    num_clients = 40
-    S = 0.05 # Threshold
-    step_size = 0.01
-    K = 10
-    eps = 0.1
-    prob = 0.8
-    hi_ru = 0.7
-    lo_ru = 0.001
-        
-    # Randomized Parameters
-    Ru_dist= np.random.uniform(0, 1, size=num_clients)
-    Ru = np.zeros(num_clients)
-    for i in range(Ru_dist.shape[0]):
-        if Ru_dist[i] < prob:
-            Ru[i] = lo_ru
-        else:
-            Ru[i] = hi_ru
-                
+    exp_names = ['FedEMadv_G0_01/',
+                 'FedEMadv_G0_05/',
+                 'FedEMadv_G0_10/',
+                 'FedEMadv_G0_20/']
+    
+    G_val = [0.01, 0.05, 0.1, 0.2]
+    n_learners = 3
+    
     for itt in range(len(exp_names)):
         
         print("running trial:", itt)
         
-        args_.save_path = 'weights/final/cifar/fig2_take2/' + exp_names[itt]
+        # Manually set argument parameters
+        args_ = Args()
+        args_.experiment = "cifar10"
+        args_.method = "FedEM_adv"
+        args_.decentralized = False
+        args_.sampling_rate = 1.0
+        args_.input_dimension = None
+        args_.output_dimension = None
+        args_.n_learners= n_learners
+        args_.n_rounds = 201
+        args_.bz = 128
+        args_.local_steps = 1
+        args_.lr_lambda = 0
+        args_.lr =0.03
+        args_.lr_scheduler = 'multi_step'
+        args_.log_freq = 10
+        args_.device = 'cuda'
+        args_.optimizer = 'sgd'
+        args_.mu = 0
+        args_.communication_probability = 0.1
+        args_.q = 1
+        args_.locally_tune_clients = False
+        args_.seed = 1234
+        args_.verbose = 1
+        args_.save_path = 'weights/final/cifar/fig4/' + exp_names[itt]
+        args_.validation = False
+        args_.save_freq = 10
 
-        
-        # Ru = np.ones(num_clients)
+        # Other Argument Parameters
+        Q = 10 # update per round
+        G = G_val[itt]
+        num_clients = 40
+        S = 0.05 # Threshold
+        step_size = 0.01
+        K = 10
+        eps = 0.1
+
+        # Randomized Parameters
+        # Ru = np.random.uniform(low=R_val[itt]-0.1, high=R_val[itt]+0.1, size=num_clients)
+        Ru = np.ones(num_clients)
         
         # Generate the dummy values here
         aggregator, clients = dummy_aggregator(args_, num_clients)
@@ -143,10 +139,7 @@ if __name__ == "__main__":
                 Wh = np.sum(Whu,axis=0)/num_clients
 
                 # Solve for adversarial ratio at every client
-                if exp_names[itt] == "no_macro_resources":
-                    Fu = solve_proportions_dummy(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
-                else:
-                    Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
+                Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
                 print(Fu)
 
                 # Assign proportion and attack params
@@ -176,6 +169,6 @@ if __name__ == "__main__":
             os.makedirs(save_root, exist_ok=True)
             aggregator.save_state(save_root)
             
-        del aggregator, clients
+        del args_, aggregator, clients
         torch.cuda.empty_cache()
             

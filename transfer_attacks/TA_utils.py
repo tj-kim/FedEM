@@ -297,3 +297,36 @@ def make_metric_table(exp_list, metric, row_names, col_names, avg_diag_flag = Tr
     df = pd.DataFrame(final_table, columns = col_names, index = row_names)
     
     return df
+
+def load_client_data(clients, c_id, mode = 'test'):
+    
+    data_x = []
+    data_y = []
+
+    if mode == 'all': # load all validation sets together
+        for i in range(len(clients)):
+            daniloader = clients[i].val_iterator
+            for (x,y,idx) in daniloader.dataset:
+                data_x.append(x)
+                data_y.append(y)
+    else:
+        if mode == 'train':
+            daniloader = clients[c_id].train_iterator
+        if mode == 'val':
+            daniloader = clients[c_id].val_iterator
+        else:
+            daniloader = clients[c_id].test_iterator
+
+        for (x,y,idx) in daniloader.dataset:
+            data_x.append(x)
+            data_y.append(y)
+
+    data_x = torch.stack(data_x)
+    try:
+        data_y = torch.stack(data_y)        
+    except:
+        data_y = torch.FloatTensor(data_y) 
+        
+    dataloader = Custom_Dataloader(data_x, data_y)
+    
+    return dataloader
