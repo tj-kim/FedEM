@@ -43,12 +43,16 @@ if __name__ == "__main__":
 #                  'FedEMadv_G0_75/',
 #                  'FedEMadv_G1/']
 
-    exp_names = ['FedEMadv_G0_01/',
-                 'FedEMadv_G0_05/',
-                 'FedEMadv_G0_10/',
-                 'FedEMadv_G0_20/']
+#     exp_names = ['FedEMadv_G0_01/',
+#                  'FedEMadv_G0_05/',
+#                  'FedEMadv_G0_10/',
+#                  'FedEMadv_G0_20/']
+
+exp_names = ['FedEMadv_G0_03/',
+                 'FedEMadv_G0_08/',
+                 'FedEMadv_G0_15/']
     
-    G_val = [0.01, 0.05, 0.1, 0.2]
+    G_val = [0.03, 0.08, 0.15]
     n_learners = 3
     
     for itt in range(len(exp_names)):
