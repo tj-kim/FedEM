@@ -17,3 +17,13 @@ def unnormalize_cifar10(normed):
     
     
     return b
+
+
+def unnormalize_femnist(normed):
+    mean = torch.tensor([0.1307])
+    std = torch.tensor([0.3081])
+    
+    unnormalize = Normalize((-mean / std).tolist(), (1.0 / std).tolist())
+    a = unnormalize(normed)
+    b = a.clone().detach().requires_grad_(True)
+    return b

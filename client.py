@@ -273,7 +273,8 @@ class Adv_MixtureClient(MixtureClient):
             test_iterator,
             logger,
             local_steps,
-            tune_locally=False
+            tune_locally=False,
+            dataset_name = 'cifar10'
     ):
         super(Adv_MixtureClient, self).__init__(
             learners_ensemble=learners_ensemble,
@@ -295,6 +296,8 @@ class Adv_MixtureClient(MixtureClient):
         combined_model = self.combine_learners_ensemble()
         self.altered_dataloader = self.gen_customdataloader(self.og_dataloader)
         self.adv_nn = Adv_NN(combined_model, self.altered_dataloader)
+        
+        self.dataset_name = dataset_name
     
     def set_adv_params(self, adv_proportion = 0, atk_params = None):
         self.adv_proportion = adv_proportion
@@ -310,7 +313,10 @@ class Adv_MixtureClient(MixtureClient):
             data_y.append(y)
 
         data_x = torch.stack(data_x)
-        data_y = torch.stack(data_y)
+        try:
+            data_y = torch.stack(data_y)
+        except:
+            data_y = torch.tensor(data_y)
         dataloader = Custom_Dataloader(data_x, data_y)
         
         return dataloader
@@ -373,7 +379,10 @@ class Adv_MixtureClient(MixtureClient):
         for i in range(sample_id.shape[0]):
             idx = sample_id[i]
             x_val_normed = x_adv[i]
-            x_val_unnorm = unnormalize_cifar10(x_val_normed)
+            try:
+                x_val_unnorm = unnormalize_cifar10(x_val_normed)
+            except:
+                x_val_unnorm = unnormalize_femnist(x_val_normed)
         
             self.train_iterator.dataset.data[idx] = x_val_unnorm
         
@@ -393,7 +402,8 @@ class Adv_Client(Client):
             test_iterator,
             logger,
             local_steps,
-            tune_locally=False
+            tune_locally=False,
+            dataset_name = 'cifar10'
     ):
         super(Adv_Client, self).__init__(
             learners_ensemble=learners_ensemble,
@@ -415,6 +425,7 @@ class Adv_Client(Client):
         combined_model = self.combine_learners_ensemble()
         self.altered_dataloader = self.gen_customdataloader(self.og_dataloader)
         self.adv_nn = Adv_NN(combined_model, self.altered_dataloader)
+        self.dataset_name = dataset_name
     
     def set_adv_params(self, adv_proportion = 0, atk_params = None):
         self.adv_proportion = adv_proportion
@@ -430,7 +441,10 @@ class Adv_Client(Client):
             data_y.append(y)
 
         data_x = torch.stack(data_x)
-        data_y = torch.stack(data_y)
+        try:
+            data_y = torch.stack(data_y)
+        except:
+            data_y = torch.tensor(data_y)
         dataloader = Custom_Dataloader(data_x, data_y)
         
         return dataloader
@@ -493,7 +507,10 @@ class Adv_Client(Client):
         for i in range(sample_id.shape[0]):
             idx = sample_id[i]
             x_val_normed = x_adv[i]
-            x_val_unnorm = unnormalize_cifar10(x_val_normed)
+            try:
+                x_val_unnorm = unnormalize_cifar10(x_val_normed)
+            except:
+                x_val_unnorm = unnormalize_femnist(x_val_normed)
         
             self.train_iterator.dataset.data[idx] = x_val_unnorm
         
