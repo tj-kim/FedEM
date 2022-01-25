@@ -74,7 +74,10 @@ class SubFEMNIST(Dataset):
     def __getitem__(self, index):
         img, target = self.data[index], int(self.targets[index])
 
-        img = np.uint8(img.numpy() * 255)
+        try:
+            img = np.uint8(img.numpy() * 255)
+        except:
+            img = np.uint8(img.detach().numpy()*255)
         img = Image.fromarray(img, mode='L')
 
         if self.transform is not None:
