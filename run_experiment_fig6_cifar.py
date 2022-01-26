@@ -40,13 +40,9 @@ import numba
 if __name__ == "__main__":
     
 
-    exp_names = ['FedEMadv_Q1',
-                 'FedEMadv_Q3',
-                 'FedEMadv_Q5',
-                 'FedEMadv_Q20',
-                 'FedEMadv_Q40']
+    exp_names = ['FedEMadv_Q80','FedEMadv_Q160']
     
-    Q_val = [1, 3, 5, 20, 40]
+    Q_val = [80,160]
     n_learners = 3
     
     for itt in range(len(exp_names)):
