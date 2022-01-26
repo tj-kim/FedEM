@@ -66,7 +66,7 @@ class Boundary_Transferer():
         
         return
         
-    def select_data_point(self, explore_set_size = 100):
+    def select_data_point(self, explore_set_size = 1000):
         """
         Select a single data point to use as comparison of different boundary types
         Change - all members of the system must classify this point the same 
