@@ -39,8 +39,9 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['no_macro_resources', 'yes_macro_resources']
+    # exp_names = ['no_macro_resources', 'yes_macro_resources']
         
+    exp_names = ['yes_macro_resources']
     # Manually set argument parameters
     args_ = Args()
     args_.experiment = "femnist"
@@ -50,7 +51,7 @@ if __name__ == "__main__":
     args_.input_dimension = None
     args_.output_dimension = None
     args_.n_learners= 3
-    args_.n_rounds = 500
+    args_.n_rounds = 200
     args_.bz = 128
     args_.local_steps = 1
     args_.lr_lambda = 0
