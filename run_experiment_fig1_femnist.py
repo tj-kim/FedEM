@@ -39,7 +39,7 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['fedem_benign','fedavg_benign', 'local_benign']
+    exp_names = ['fedem_adv','fedavg_adv', 'local_adv']
     exp_method = ['FedEM_adv','FedAvg_adv','local_adv']
     exp_num_learners = [3,1,1]
     exp_lr = [0.03, 0.03, 0.01]
@@ -84,7 +84,7 @@ if __name__ == "__main__":
         S = 0.05 # Threshold
         step_size = 0.01
         K = 10
-        eps = 0.2
+        eps = 0.3
 
         # Randomized Parameters
         # Ru = np.random.uniform(0, 0.5, size=num_clients)
@@ -96,10 +96,10 @@ if __name__ == "__main__":
         # Set attack parameters
         x_min = torch.min(clients[0].adv_nn.dataloader.x_data)
         x_max = torch.max(clients[0].adv_nn.dataloader.x_data)
-#         atk_params = PGD_Params()
-#         atk_params.set_params(batch_size=1, iteration = K,
-#                            target = -1, x_val_min = x_min, x_val_max = x_max,
-#                            step_size = 0.05, step_norm = "inf", eps = eps, eps_norm = "inf")
+        atk_params = PGD_Params()
+        atk_params.set_params(batch_size=1, iteration = K,
+                           target = -1, x_val_min = x_min, x_val_max = x_max,
+                           step_size = 0.05, step_norm = "inf", eps = eps, eps_norm = "inf")
 
         # Obtain the central controller decision making variables (static)
         num_h = args_.n_learners
@@ -117,30 +117,30 @@ if __name__ == "__main__":
         current_round = 0
         while current_round <= args_.n_rounds:
 
-            # If statement catching every Q rounds -- update dataset
-#             if  current_round != 0 and current_round%Q == 0: # 
-#                 # print("Round:", current_round, "Calculation Adv")
-#                 # Obtaining hypothesis information
-#                 Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
-#                 for i in range(len(clients)):
-#                     # print("client", i)
-#                     temp_client = aggregator.clients[i]
-#                     hyp_weights = temp_client.learners_ensemble.learners_weights
-#                     Whu[i] = hyp_weights
+#             If statement catching every Q rounds -- update dataset
+            if  current_round != 0 and current_round%Q == 0: # 
+                # print("Round:", current_round, "Calculation Adv")
+                # Obtaining hypothesis information
+                Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
+                for i in range(len(clients)):
+                    # print("client", i)
+                    temp_client = aggregator.clients[i]
+                    hyp_weights = temp_client.learners_ensemble.learners_weights
+                    Whu[i] = hyp_weights
 
-#                 row_sums = Whu.sum(axis=1)
-#                 Whu = Whu / row_sums[:, np.newaxis]
-#                 Wh = np.sum(Whu,axis=0)/num_clients
+                row_sums = Whu.sum(axis=1)
+                Whu = Whu / row_sums[:, np.newaxis]
+                Wh = np.sum(Whu,axis=0)/num_clients
 
-#                 # Solve for adversarial ratio at every client
-#                 Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
+                # Solve for adversarial ratio at every client
+                Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
 
-#                 # Assign proportion and attack params
-#                 # Assign proportion and compute new dataset
-#                 for i in range(len(clients)):
-#                     aggregator.clients[i].set_adv_params(Fu[i], atk_params)
-#                     aggregator.clients[i].update_advnn()
-#                     aggregator.clients[i].assign_advdataset()
+                # Assign proportion and attack params
+                # Assign proportion and compute new dataset
+                for i in range(len(clients)):
+                    aggregator.clients[i].set_adv_params(Fu[i], atk_params)
+                    aggregator.clients[i].update_advnn()
+                    aggregator.clients[i].assign_advdataset()
 
             aggregator.mix()
             
