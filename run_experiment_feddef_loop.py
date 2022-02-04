@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
                 # Solve for adversarial ratio at every client
                 Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
-                print(Fu)
+                # print(Fu)
 
                 # Assign proportion and attack params
                 # Assign proportion and compute new dataset
