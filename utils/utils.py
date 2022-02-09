@@ -85,6 +85,11 @@ def get_learner(
         metric = accuracy
         model = FemnistCNN(num_classes=62).to(device)
         is_binary_classification = False
+    elif name == "mnist":
+        criterion = nn.CrossEntropyLoss(reduction="none").to(device)
+        metric = accuracy
+        model = FemnistCNN(num_classes=10).to(device)
+        is_binary_classification = False
     elif name == "shakespeare":
         all_characters = string.printable
         labels_weight = torch.ones(len(all_characters), device=device)
@@ -214,6 +219,8 @@ def get_loaders(type_, root_path, batch_size, is_validation):
         inputs, targets = get_cifar100()
     elif type_ == "emnist":
         inputs, targets = get_emnist()
+    elif type_ == "mnist":
+        inputs, targets = get_mnist()
     else:
         inputs, targets = None, None
 
@@ -287,6 +294,8 @@ def get_loader(type_, path, batch_size, train, inputs=None, targets=None):
         dataset = SubFEMNIST(path)
     elif type_ == "shakespeare":
         dataset = CharacterDataset(path, chunk_len=SHAKESPEARE_CONFIG["chunk_len"])
+    elif type_ == "mnist":
+        dataset = SubMNIST(path, mnist_data=inputs, mnist_targets=targets)
     else:
         raise NotImplementedError(f"{type_} not recognized type; possible are {list(LOADER_TYPE.keys())}")
 

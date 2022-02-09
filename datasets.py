@@ -3,7 +3,7 @@ import pickle
 import string
 
 import torch
-from torchvision.datasets import CIFAR10, CIFAR100, EMNIST
+from torchvision.datasets import CIFAR10, CIFAR100, EMNIST, MNIST
 from torchvision.transforms import Compose, ToTensor, Normalize
 from torch.utils.data import Dataset
 
@@ -268,6 +268,64 @@ class SubCIFAR100(Dataset):
 
         return img, target, index
 
+    
+class SubMNIST(Dataset):
+    """
+    Constructs a subset of EMNIST dataset from a pickle file;
+    expects pickle file to store list of indices
+
+    Attributes
+    ----------
+    indices: iterable of integers
+    transform
+    data
+    targets
+
+    Methods
+    -------
+    __init__
+    __len__
+    __getitem__
+    """
+
+    def __init__(self, path, mnist_data=None, mnist_targets=None, transform=None):
+        """
+        :param path: path to .pkl file; expected to store list of indices
+        :param emnist_data: EMNIST dataset inputs
+        :param emnist_targets: EMNIST dataset labels
+        :param transform:
+        """
+        with open(path, "rb") as f:
+            self.indices = pickle.load(f)
+
+        if transform is None:
+            self.transform =\
+                Compose([
+                    ToTensor(),
+                    Normalize((0.1307,), (0.3081,))
+                ])
+
+        if mnist_data is None or mnist_targets is None:
+            self.data, self.targets = get_mnist()
+        else:
+            self.data, self.targets = mnist_data, mnist_targets
+
+        self.data = self.data[self.indices]
+        self.targets = self.targets[self.indices]
+
+    def __len__(self):
+        return self.data.size(0)
+
+    def __getitem__(self, index):
+        img, target = self.data[index], int(self.targets[index])
+
+        img = Image.fromarray(img.numpy(), mode='L')
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return img, target, index
+    
 
 class CharacterDataset(Dataset):
     def __init__(self, file_path, chunk_len):
@@ -428,3 +486,33 @@ def get_cifar100():
         ])
 
     return cifar100_data, cifar100_targets
+
+def get_mnist():
+    mnist_path = os.path.join("data", "mnist", "raw_data")
+    assert os.path.isdir(mnist_path), "Download mnist dataset!!"
+    
+    mnist_train =\
+        MNIST(
+            root= mnist_path,
+            train=True, download=False
+        )
+
+    mnist_test =\
+        MNIST(
+            root=mnist_path,
+            train=False,
+            download=False)
+
+    mnist_data = \
+        torch.cat([
+            torch.tensor(mnist_train.data),
+            torch.tensor(mnist_test.data)
+        ])
+
+    mnist_targets = \
+        torch.cat([
+            torch.tensor(mnist_train.targets),
+            torch.tensor(mnist_test.targets)
+        ])
+
+    return mnist_data, mnist_targets

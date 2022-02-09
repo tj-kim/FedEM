@@ -9,6 +9,7 @@ LOADER_TYPE = {
     "emnist": "emnist",
     "femnist": "femnist",
     "shakespeare": "shakespeare",
+    "mnist": "mnist",
 }
 
 EXTENSIONS = {
@@ -18,6 +19,7 @@ EXTENSIONS = {
     "emnist": ".pkl",
     "femnist": ".pt",
     "shakespeare": ".txt",
+    "mnist" : ".pkl",
 }
 
 AGGREGATOR_TYPE = {
