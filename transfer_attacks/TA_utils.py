@@ -312,9 +312,9 @@ def load_client_data(clients, c_id, mode = 'test'):
     else:
         if mode == 'train':
             daniloader = clients[c_id].train_iterator
-        if mode == 'val':
+        elif mode == 'val':
             daniloader = clients[c_id].val_iterator
-        else:
+        elif mode == 'test':
             daniloader = clients[c_id].test_iterator
 
         for (x,y,idx) in daniloader.dataset:
