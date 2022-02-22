@@ -44,9 +44,9 @@ if __name__ == "__main__":
 #     exp_num_learners = [1,1,3]
 #     exp_lr = [0.01, 0.01, 0.01]
 
-    exp_names = ['fedEM']
+    exp_names = ['fedEM_n4']
     exp_method = ['FedEM_adv']
-    exp_num_learners = [3]
+    exp_num_learners = [4]
     exp_lr = [ 0.01]
     
         
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/cifar100/feddef_l2/' + exp_names[itt]
+        args_.save_path = 'weights/cifar100/feddef/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 10
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         S = 0.05 # Threshold
         step_size = 0.01
         K = 10
-        eps = 4.5
+        eps = 0.1
 
         # Randomized Parameters
         # Ru = np.random.uniform(0, 0.5, size=num_clients)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         atk_params = PGD_Params()
         atk_params.set_params(batch_size=1, iteration = K,
                            target = -1, x_val_min = x_min, x_val_max = x_max,
-                           step_size = 0.01, step_norm = "inf", eps = eps, eps_norm = 2)
+                           step_size = 0.01, step_norm = "inf", eps = eps, eps_norm = 'inf')
 
         # Obtain the central controller decision making variables (static)
         num_h = args_.n_learners= 3
