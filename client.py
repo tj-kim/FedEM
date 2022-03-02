@@ -394,6 +394,173 @@ class Adv_MixtureClient(MixtureClient):
         
         return
     
+class Adv_MixtureClient_DVERGE(MixtureClient):
+    """ 
+    ADV client with more params -- use to PGD generate data between rounds
+    """
+    def __init__(
+            self,
+            learners_ensemble,
+            train_iterator,
+            val_iterator,
+            test_iterator,
+            logger,
+            local_steps,
+            tune_locally=False,
+            dataset_name = 'cifar10'
+    ):
+        super(Adv_MixtureClient_DVERGE, self).__init__(
+            learners_ensemble=learners_ensemble,
+            train_iterator=train_iterator,
+            val_iterator=val_iterator,
+            test_iterator=test_iterator,
+            logger=logger,
+            local_steps=local_steps,
+            tune_locally=tune_locally
+        )
+
+        self.adv_proportion = 0
+        self.atk_params = None
+        
+        # Make copy of dataset and set aside for adv training
+        self.og_dataloader = deepcopy(self.train_iterator) # Update self.train_loader every iteration
+        
+        # Add adversarial client 
+        self.altered_dataloader = self.gen_customdataloader(self.og_dataloader)
+        self.num_hypotheses = len(self.learners_ensemble.learners)
+        self.adv_nns = self.update_advnn()
+        self.dataset_name = dataset_name
+        
+        
+        self.train_iterator_list = []
+    
+    def set_adv_params(self, adv_proportion = 0, atk_params = None):
+        self.adv_proportion = adv_proportion
+        self.atk_params = atk_params
+    
+    def gen_customdataloader(self, og_dataloader):
+        # Combine Validation Data across all clients as test
+        data_x = []
+        data_y = []
+
+        for (x,y,idx) in og_dataloader.dataset:
+            data_x.append(x)
+            data_y.append(y)
+
+        data_x = torch.stack(data_x)
+        try:
+            data_y = torch.stack(data_y)
+        except:
+            data_y = torch.tensor(data_y)
+        dataloader = Custom_Dataloader(data_x, data_y)
+        
+        return dataloader
+    
+    def update_advnn(self):
+        # reassign weights after trained
+        # make X adv nn based on the number of hypotheses that are present at the models
+        adv_nns = []
+        for i in range(self.num_hypotheses):
+            adv_nns += [Adv_NN(self.learners_ensemble.learners[i].model, self.altered_dataloader)]
+        
+        self.adv_nns = adv_nns
+        return
+    
+    def generate_adversarial_data(self):
+        # Generate adversarial datapoints while recognizing idx of sampled without replacement
+        
+        # Draw random idx without replacement 
+        num_datapoints = self.train_iterator.dataset.targets.shape[0]
+        sample_size = int(np.ceil(num_datapoints * self.adv_proportion))
+        sample = np.random.choice(a=num_datapoints, size=sample_size)
+        
+        # Sample the proportion and split the sampled dataset into N equal groups per hypotheses
+        sample_groups = {}
+        x_adv_groups = {} # Splitting by hypotheses
+        
+        for i in range(self.num_hypotheses):
+            sub_sample = sample[int(np.floor(i*sample.shape[0]/self.num_hypotheses)):
+                                int(np.floor((i+1)*sample.shape[0]/self.num_hypotheses))]
+            sample_groups[i] = sub_sample
+            x_data = self.altered_dataloader.x_data[sub_sample]
+            y_data = self.altered_dataloader.y_data[sub_sample]
+            
+            
+            self.adv_nns[i].pgd_sub(self.atk_params, x_data.cuda(), y_data.cuda())
+            x_adv_groups[i] = self.adv_nns[i].x_adv
+        
+        return sample_groups, x_adv_groups
+    
+    def assign_advdataset(self):
+        # convert dataset to normed and replace specific datapoints
+        
+        # Flush current used dataset with original
+        self.train_iterator = deepcopy(self.og_dataloader)
+        train_iterator_list = []
+        
+        # adversarial datasets loop, adjust normed and push 
+        sample_id_groups, x_adv_groups = self.generate_adversarial_data()
+        
+        for j in range(self.num_hypotheses):
+            train_iterator_list += [deepcopy(self.og_dataloader)]
+            
+            for k in range(self.num_hypotheses):
+                if j != k:
+                    sample_id = sample_id_groups[k]
+                    x_adv = x_adv_groups[k]
+
+                    for i in range(sample_id.shape[0]):
+                        idx = sample_id[i]
+                        x_val_normed = x_adv[i]
+                        if self.dataset_name == 'cifar10' or self.dataset_name == 'cifar100':
+                            x_val_unnorm = unnormalize_cifar10(x_val_normed)
+                        elif self.dataset_name == 'mnist' or self.dataset_name == 'femnist':
+                            x_val_unnorm = unnormalize_femnist(x_val_normed)
+                        else:
+                            print("Error: Dataset not recognized")
+
+                        train_iterator_list[j].dataset.data[idx] = x_val_unnorm
+        
+        self.train_iterator_list = train_iterator_list
+        self.train_loader = iter(self.train_iterator)
+        
+        return
+    
+    def step(self, single_batch_flag=False, *args, **kwargs):
+        """
+        perform on step for the client
+
+        :param single_batch_flag: if true, the client only uses one batch to perform the update
+        :return
+            clients_updates: ()
+        """
+        self.counter += 1
+        self.update_sample_weights()
+        self.update_learners_weights()
+
+        if single_batch_flag:
+            batch = self.get_next_batch()
+            client_updates = \
+                self.learners_ensemble.fit_batch(
+                    batch=batch,
+                    weights=self.samples_weights
+                )
+        else:
+            if len(self.train_iterator_list) == 0:
+                client_updates = \
+                    self.learners_ensemble.fit_epochs(
+                        iterator=self.train_iterator,
+                        n_epochs=self.local_steps,
+                        weights=self.samples_weights)
+            else:
+                client_updates = \
+                    self.learners_ensemble.fit_epochs_multiple_iterators(
+                        iterators=self.train_iterator_list,
+                        n_epochs=self.local_steps,
+                        weights=self.samples_weights)
+                
+        return client_updates
+    
 class Adv_Client(Client):
     """ 
     ADV client with more params -- use to PGD generate data between rounds

@@ -35,6 +35,7 @@ AGGREGATOR_TYPE = {
     "FFL": "FFL",
     "FedEM_adv": "centralized",
     "FedAvg_adv": "centralized",
+    "FedEM_dverge":"centralized",
     "local_adv": "no_communication",
 }
 
@@ -50,6 +51,7 @@ CLIENT_TYPE = {
     "pFedMe": "normal",
     "clustered": "normal",
     "FedEM_adv": "FedEM_adv",
+    "FedEM_dverge": "FedEM_dverge",
     "FedAvg_adv": "normal_adv",
     "local_adv": "normal_adv",
 }
