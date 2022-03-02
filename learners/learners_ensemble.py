@@ -120,6 +120,25 @@ class LearnersEnsemble(object):
             client_updates[learner_id] = (params - old_params)
 
         return client_updates.cpu().numpy()
+    
+    def fit_epochs_multiple_iterators(self, iterators, n_epochs, weights=None):
+        """
+        same function as above -- except each learner obtains a separate data iterator
+        TJ Kim - 3.02.22 CMU
+        """
+        client_updates = torch.zeros(len(self.learners), self.model_dim)
+
+        for learner_id, learner in enumerate(self.learners):
+            old_params = learner.get_param_tensor()
+            if weights is not None:
+                learner.fit_epochs(iterators[learner_id], n_epochs, weights=weights[learner_id])
+            else:
+                learner.fit_epochs(iterators[learner_id], n_epochs, weights=None)
+            params = learner.get_param_tensor()
+
+            client_updates[learner_id] = (params - old_params)
+
+        return client_updates.cpu().numpy()
 
     def evaluate_iterator(self, iterator):
         """

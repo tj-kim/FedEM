@@ -339,10 +339,14 @@ class Adv_MixtureClient(MixtureClient):
         new_model.eval()
         new_weight_dict = deepcopy(weights_h[0])
         for key in weights_h[0]:
-            htemp = model_weights[0]*weights_h[0][key]
+            new_weight_dict[key] = model_weights[0]*weights_h[0][key]
             for i in range(1,len(model_weights)):
-                htemp+=model_weights[i]*weights_h[i][key]
-            new_weight_dict[key] = htemp
+                new_weight_dict[key]+=model_weights[i]*weights_h[i][key]
+                
+#             htemp = model_weights[0]*weights_h[0][key]
+#             for i in range(1,len(model_weights)):
+#                 htemp+=model_weights[i]*weights_h[i][key]
+#             new_weight_dict[key] = htemp
         new_model.load_state_dict(new_weight_dict)
         
         return new_model
