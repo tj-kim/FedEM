@@ -485,7 +485,6 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
             x_data = self.altered_dataloader.x_data[sub_sample]
             y_data = self.altered_dataloader.y_data[sub_sample]
             
-            
             self.adv_nns[i].pgd_sub(self.atk_params, x_data.cuda(), y_data.cuda())
             x_adv_groups[i] = self.adv_nns[i].x_adv
         
@@ -505,21 +504,23 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
             train_iterator_list += [deepcopy(self.og_dataloader)]
             
             for k in range(self.num_hypotheses):
-                if j != k:
-                    sample_id = sample_id_groups[k]
-                    x_adv = x_adv_groups[k]
+#                 if j != k:
+                # To revert to bad DVERGE tab from here
+                sample_id = sample_id_groups[k]
+                x_adv = x_adv_groups[k]
 
-                    for i in range(sample_id.shape[0]):
-                        idx = sample_id[i]
-                        x_val_normed = x_adv[i]
-                        if self.dataset_name == 'cifar10' or self.dataset_name == 'cifar100':
-                            x_val_unnorm = unnormalize_cifar10(x_val_normed)
-                        elif self.dataset_name == 'mnist' or self.dataset_name == 'femnist':
-                            x_val_unnorm = unnormalize_femnist(x_val_normed)
-                        else:
-                            print("Error: Dataset not recognized")
+                for i in range(sample_id.shape[0]):
+                    idx = sample_id[i]
+                    x_val_normed = x_adv[i]
+                    if self.dataset_name == 'cifar10' or self.dataset_name == 'cifar100':
+                        x_val_unnorm = unnormalize_cifar10(x_val_normed)
+                    elif self.dataset_name == 'mnist' or self.dataset_name == 'femnist':
+                        x_val_unnorm = unnormalize_femnist(x_val_normed)
+                    else:
+                        print("Error: Dataset not recognized")
 
-                        train_iterator_list[j].dataset.data[idx] = x_val_unnorm
+                    train_iterator_list[j].dataset.data[idx] = x_val_unnorm
+                    # To here and uncomment j!=k
         
         self.train_iterator_list = train_iterator_list
         self.train_loader = iter(self.train_iterator)

@@ -73,7 +73,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/cifar10/DVERGE/' + exp_names[itt]
+        args_.save_path = 'weights/cifar10/DVERGE_combined/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
 
