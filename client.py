@@ -14,6 +14,7 @@ from transfer_attacks.Personalized_NN import *
 
 from transfer_attacks.Custom_Dataloader import *
 from transfer_attacks.unnormalize import *
+from itertools import combinations
 
 
 class Client(object):
@@ -343,10 +344,6 @@ class Adv_MixtureClient(MixtureClient):
             for i in range(1,len(model_weights)):
                 new_weight_dict[key]+=model_weights[i]*weights_h[i][key]
                 
-#             htemp = model_weights[0]*weights_h[0][key]
-#             for i in range(1,len(model_weights)):
-#                 htemp+=model_weights[i]*weights_h[i][key]
-#             new_weight_dict[key] = htemp
         new_model.load_state_dict(new_weight_dict)
         
         return new_model
@@ -428,9 +425,12 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
         # Add adversarial client 
         self.altered_dataloader = self.gen_customdataloader(self.og_dataloader)
         self.num_hypotheses = len(self.learners_ensemble.learners)
+        self.modes = ["indiv_h", "combination_h"]
+        self.modes_idx = 1
+        
         self.adv_nns = self.update_advnn()
         self.dataset_name = dataset_name
-        
+       
         
         self.train_iterator_list = []
     
@@ -456,13 +456,50 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
         
         return dataloader
     
+    def combine_learners_ensemble(self, hyp_idxs):
+
+        # This is where the models are stored -- one for each mixture --> learner.model for nn
+        hypotheses = self.learners_ensemble.learners
+
+        # obtain the state dict for each of the weights 
+        weights_h = []
+
+        model_weights = self.learners_ensemble.learners_weights
+        num_hyp_total = len(model_weights)
+        num_hyp = len(hyp_idxs)
+        scale = 1/num_hyp
+        
+        for h in hypotheses:
+            weights_h += [h.model.state_dict()]
+        
+        # first make the model with empty weights
+        new_model = deepcopy(hypotheses[0].model)
+        new_model.eval()
+        new_weight_dict = deepcopy(weights_h[0])
+        for key in weights_h[0]:
+            idx = hyp_idxs[0]
+            new_weight_dict[key] = scale*weights_h[idx][key]
+            for i in hyp_idxs[1:]:
+                new_weight_dict[key]+= scale*weights_h[i][key]
+
+        new_model.load_state_dict(new_weight_dict)
+    
+        return new_model
+    
     def update_advnn(self):
         # reassign weights after trained
         # make X adv nn based on the number of hypotheses that are present at the models
         adv_nns = []
+        
         for i in range(self.num_hypotheses):
             adv_nns += [Adv_NN(self.learners_ensemble.learners[i].model, self.altered_dataloader)]
-        
+        if self.modes_idx == 1:
+            # make combinations of hypothesis
+            for c in range(2,self.num_hypotheses+1):
+                combo = list(combinations(range(self.num_hypotheses),c))
+                for cc in combo:
+                    adv_nns += [Adv_NN(self.combine_learners_ensemble(cc), self.altered_dataloader)]
+                
         self.adv_nns = adv_nns
         return
     
@@ -478,9 +515,11 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
         sample_groups = {}
         x_adv_groups = {} # Splitting by hypotheses
         
-        for i in range(self.num_hypotheses):
-            sub_sample = sample[int(np.floor(i*sample.shape[0]/self.num_hypotheses)):
-                                int(np.floor((i+1)*sample.shape[0]/self.num_hypotheses))]
+        num_nns = len(self.adv_nns)
+        
+        for i in range(num_nns):
+            sub_sample = sample[int(np.floor(i*sample.shape[0]/num_nns)):
+                                int(np.floor((i+1)*sample.shape[0]/num_nns))]
             sample_groups[i] = sub_sample
             x_data = self.altered_dataloader.x_data[sub_sample]
             y_data = self.altered_dataloader.y_data[sub_sample]
@@ -497,13 +536,15 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
         self.train_iterator = deepcopy(self.og_dataloader)
         train_iterator_list = []
         
+        num_nns = len(self.adv_nns)
+        
         # adversarial datasets loop, adjust normed and push 
         sample_id_groups, x_adv_groups = self.generate_adversarial_data()
         
         for j in range(self.num_hypotheses):
             train_iterator_list += [deepcopy(self.og_dataloader)]
             
-            for k in range(self.num_hypotheses):
+            for k in range(num_nns):
 #                 if j != k:
                 # To revert to bad DVERGE tab from here
                 sample_id = sample_id_groups[k]
