@@ -163,7 +163,12 @@ def run_experiment(args_):
         save_root = os.path.join(args_.save_path)
 
         os.makedirs(save_root, exist_ok=True)
-        aggregator.save_state(save_root)
+        
+        if args_.locally_tune_clients:
+            aggregator.save_state_local(save_root)
+        
+        else:
+            aggregator.save_state(save_root)
 
 
 if __name__ == "__main__":
