@@ -39,15 +39,10 @@ import numba
 
 if __name__ == "__main__":
 
-#     exp_names = ['fedEM_adv_c2','fedEM_adv_c4','fedEM_adv_c8','fedEM_adv_c16',
-#                  'fedEM_dverge_c2','fedEM_dverge_c4','fedEM_dverge_c8','fedEM_dverge_c16']
-#     exp_method = ['FedEM_adv','FedEM_adv','FedEM_adv','FedEM_adv',
-#                   'FedEM_dverge','FedEM_dverge','FedEM_dverge','FedEM_dverge']
-    
-#     num_clients_list = [2,4,8,16,2,4,8,16]
 
     exp_names = ['fedEM_c2','fedEM_c4','fedEM_c8','fedEM_c16']
     exp_method = ['FedEM','FedEM','FedEM','FedEM']
+    adv_mode = True
     
     num_clients_list = [2,4,8,16]
     
@@ -100,26 +95,25 @@ if __name__ == "__main__":
         # Generate the dummy values here
         aggregator, clients = dummy_aggregator(args_, num_clients)
 
-        # COMMENT FOR REG FEDEM HERE TO
+        if adv_mode:
         # Set attack parameters
-#         x_min = torch.min(clients[0].altered_dataloader.x_data)
-#         x_max = torch.max(clients[0].altered_dataloader.x_data)
-        
-        
-#         atk_params = PGD_Params()
-#         atk_params.set_params(batch_size=1, iteration = K,
-#                            target = -1, x_val_min = x_min, x_val_max = x_max,
-#                            step_size = 0.01, step_norm = "inf", eps = eps, eps_norm = 'inf')
+            x_min = torch.min(clients[0].altered_dataloader.x_data)
+            x_max = torch.max(clients[0].altered_dataloader.x_data)
 
-#         # Obtain the central controller decision making variables (static)
-#         num_h = args_.n_learners= 3
-#         Du = np.zeros(len(clients))
 
-#         for i in range(len(clients)):
-#             num_data = clients[i].train_iterator.dataset.targets.shape[0]
-#             Du[i] = num_data
-#         D = np.sum(Du) # Total number of data points
-         #HERE
+            atk_params = PGD_Params()
+            atk_params.set_params(batch_size=1, iteration = K,
+                               target = -1, x_val_min = x_min, x_val_max = x_max,
+                               step_size = 0.01, step_norm = "inf", eps = eps, eps_norm = 'inf')
+
+            # Obtain the central controller decision making variables (static)
+            num_h = args_.n_learners= 3
+            Du = np.zeros(len(clients))
+
+            for i in range(len(clients)):
+                num_data = clients[i].train_iterator.dataset.targets.shape[0]
+                Du[i] = num_data
+            D = np.sum(Du) # Total number of data points
 
 
         # Train the model
@@ -130,29 +124,29 @@ if __name__ == "__main__":
 
             
         # For regular em comment here to 
+            if adv_mode:
 #             # If statement catching every Q rounds -- update dataset
-#             if  current_round != 0 and current_round%Q == 0: # 
-#                 "ADV Iter"
-#                 Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
-#                 for i in range(len(clients)):
-#                     # print("client", i)
-#                     temp_client = aggregator.clients[i]
-#                     hyp_weights = temp_client.learners_ensemble.learners_weights
-#                     Whu[i] = hyp_weights
+                if  current_round != 0 and current_round%Q == 0: # "ADV Iter"
+                    Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
+                    for i in range(len(clients)):
+                        # print("client", i)
+                        temp_client = aggregator.clients[i]
+                        hyp_weights = temp_client.learners_ensemble.learners_weights
+                        Whu[i] = hyp_weights
 
-#                 row_sums = Whu.sum(axis=1)
-#                 Whu = Whu / row_sums[:, np.newaxis]
-#                 Wh = np.sum(Whu,axis=0)/num_clients
+                    row_sums = Whu.sum(axis=1)
+                    Whu = Whu / row_sums[:, np.newaxis]
+                    Wh = np.sum(Whu,axis=0)/num_clients
 
-#                 # Solve for adversarial ratio at every client
-#                 Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
+                    # Solve for adversarial ratio at every client
+                    Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
 
-#                 # Assign proportion and attack params
-#                 # Assign proportion and compute new dataset
-#                 for i in range(len(clients)):
-#                     aggregator.clients[i].set_adv_params(Fu[i], atk_params)
-#                     aggregator.clients[i].update_advnn()
-#                     aggregator.clients[i].assign_advdataset()
+                    # Assign proportion and attack params
+                    # Assign proportion and compute new dataset
+                    for i in range(len(clients)):
+                        aggregator.clients[i].set_adv_params(Fu[i], atk_params)
+                        aggregator.clients[i].update_advnn()
+                        aggregator.clients[i].assign_advdataset()
         # here
 
             aggregator.mix()
