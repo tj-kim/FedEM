@@ -40,11 +40,10 @@ import numba
 if __name__ == "__main__":
 
 
-    exp_names = ['fedEM_c2','fedEM_c4','fedEM_c8','fedEM_c16']
-    exp_method = ['FedEM','FedEM','FedEM','FedEM']
+    exp_names = ['c5','c10','c20','c30','c40']
     adv_mode = True
     
-    num_clients_list = [2,4,8,16]
+    num_clients_list = [5,10,20,30,40]
     
         
     for itt in range(len(exp_names)):
@@ -54,13 +53,13 @@ if __name__ == "__main__":
         # Manually set argument parameters
         args_ = Args()
         args_.experiment = "cifar10"
-        args_.method = exp_method[itt]
+        args_.method = 'FedEM_adv'
         args_.decentralized = False
         args_.sampling_rate = 1.0
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= 3
-        args_.n_rounds = 200
+        args_.n_rounds = 150
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
@@ -75,13 +74,13 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/cifar10/client_count/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar/client_count/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
 
         # Other Argument Parameters
         Q = 10 # update per round
-        G = 0.5
+        G = 0.15
         num_clients = num_clients_list[itt] #50
         S = 0.05 # Threshold
         step_size = 0.01
