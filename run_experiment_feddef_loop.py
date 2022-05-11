@@ -39,12 +39,10 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['22_01_07_feddef_n40_linf0_5_G0_0_R1_0_Q10_eps0_1_hyp1/',
-                 '22_01_07_feddef_n40_linf0_5_G0_5_R1_0_Q10_eps0_1_hyp1/',
-                 '22_01_07_feddef_n40_linf0_5_G1_0_R1_0_Q10_eps0_1_hyp1/']
+    exp_names = ['g0_1', 'g0_5', 'g1', 'g2', 'g4']
     
-    G_val = [0,0.5,1.0]
-    n_learners = 1
+    G_val = [0.01,0.05,0.1,0.2,0.4]
+    n_learners = 3
     
     for itt in range(len(exp_names)):
         
@@ -59,7 +57,7 @@ if __name__ == "__main__":
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= n_learners
-        args_.n_rounds = 201
+        args_.n_rounds = 100
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
@@ -74,7 +72,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/cifar/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/celeba/G_sweep/' + exp_names[itt]
         args_.validation = False
 
         # Other Argument Parameters
