@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
             # Other Argument Parameters
     Q = 10 # update per round
-    G = 0.15
+    G = 0.5
     num_clients = 50 # 40 for cifar10
     S = 0.05 # Threshold
     step_size = 0.01
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         
         print("running trial:", itt, "out of", len(exp_names)-1)
         
-        args_.save_path = 'weights/neurips/cifar100/prop/none/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar100/prop/none_G05/' + exp_names[itt]
 
         
         # Ru = np.ones(num_clients)

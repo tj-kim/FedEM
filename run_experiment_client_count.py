@@ -40,10 +40,10 @@ import numba
 if __name__ == "__main__":
 
 
-    exp_names = ['c5','c10','c20','c30','c40']
+    exp_names = ['c5','c10','c20','c30','c40', 'c50']
     adv_mode = True
     
-    num_clients_list = [5,10,20,30,40]
+    num_clients_list = [5,10,20,30,40,50]
     
         
     for itt in range(len(exp_names)):
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         
         # Manually set argument parameters
         args_ = Args()
-        args_.experiment = "cifar10"
+        args_.experiment = "cifar100"
         args_.method = 'FedEM_adv'
         args_.decentralized = False
         args_.sampling_rate = 1.0
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/neurips/cifar/client_count/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar100/client_count/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
 
