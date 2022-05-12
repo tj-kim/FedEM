@@ -79,6 +79,7 @@ class Client(object):
         self.train_iterator = train_iterator
         self.val_iterator = val_iterator
         self.test_iterator = test_iterator
+        self.true_train_iterator = copy.deepcopy(self.train_iterator)
 
         self.train_loader = iter(self.train_iterator)
 
@@ -101,6 +102,19 @@ class Client(object):
 
         return batch
 
+    def swap_dataset_labels(self, class_count):
+        y_temp = class_count - self.true_train_iterator.dataset.targets - 1
+        self.train_iterator.dataset.targets = y_temp
+        self.train_loader = iter(self.train_iterator)
+        
+        return 
+    
+    def reset_dataset_labels(self):
+        self.train_iterator = copy.deepcopy(self.true_train_iterator)
+        self.train_loader = iter(self.train_iterator)
+        
+        return
+    
     def step(self, single_batch_flag=False, *args, **kwargs):
         """
         perform on step for the client
