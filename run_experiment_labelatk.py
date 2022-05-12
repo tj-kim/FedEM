@@ -100,7 +100,7 @@ if __name__ == "__main__":
         aggregator, clients = dummy_aggregator(args_, num_clients)
         
         for i in range(atk_count):
-            clients[i].swap_dataset_labels(num_classes)
+            aggregator.clients[i].swap_dataset_labels(num_classes)
 
         
         if adv_mode[itt]:

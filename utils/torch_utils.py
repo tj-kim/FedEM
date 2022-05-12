@@ -4,6 +4,10 @@ import torch
 import torch.nn as nn
 
 
+def krum_learners(learners, target_learner):
+    
+    return 
+
 def average_learners(
         learners,
         target_learner,
