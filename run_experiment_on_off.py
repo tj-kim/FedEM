@@ -39,12 +39,12 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['benign', 'adv']
-    adv_mode = [False, True]
+    exp_names = ['FedAvg_adv', 'FedEM_adv']
+#     adv_mode = [False, True]
         
     # Manually set argument parameters
     args_ = Args()
-    args_.experiment = "cifar100"
+    args_.experiment = "cifar10"
     args_.method = "FedEM_adv"
     args_.decentralized = False
     args_.sampling_rate = 1.0
@@ -79,19 +79,20 @@ if __name__ == "__main__":
     eps = 0.1
     prob = 0.8
     Ru = np.ones(num_clients)
+    alpha_val_str = 0_3
                 
     for itt in range(len(exp_names)):
         
         
         print("running trial:", itt, "out of", len(exp_names)-1)
         
-        args_.save_path = 'weights/neurips/cifar100/prop/with/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar10/alpha/' + str(alpha_val_str) + '/' + exp_names[itt]
 
         
-        if adv_mode[itt]:
+        if exp_names[itt] == 'FedAvg_adv':
+            args_.method = "FedAvg_adv"
+        elif exp_names[itt] == 'FedEM_adv':
             args_.method = "FedEM_adv"
-        else:
-            args_.method = "FedEM"
                 
         # Generate the dummy values here
         aggregator, clients = dummy_aggregator(args_, num_clients)
