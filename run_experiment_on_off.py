@@ -98,7 +98,7 @@ if __name__ == "__main__":
         aggregator, clients = dummy_aggregator(args_, num_clients)
 
         
-        if if adv_mode[itt]:
+        if adv_mode[itt]:
             # Set attack parameters
             x_min = torch.min(clients[0].adv_nn.dataloader.x_data)
             x_max = torch.max(clients[0].adv_nn.dataloader.x_data)
