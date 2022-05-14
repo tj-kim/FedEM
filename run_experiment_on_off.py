@@ -79,14 +79,14 @@ if __name__ == "__main__":
     eps = 0.1
     prob = 0.8
     Ru = np.ones(num_clients)
-    alpha_val_str = 0_3
+    alpha_val_str = '0_3'
                 
     for itt in range(len(exp_names)):
         
         
         print("running trial:", itt, "out of", len(exp_names)-1)
         
-        args_.save_path = 'weights/neurips/cifar10/alpha/' + str(alpha_val_str) + '/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar10/alpha/' + alpha_val_str + '/' + exp_names[itt]
 
         
         if exp_names[itt] == 'FedAvg_adv':
