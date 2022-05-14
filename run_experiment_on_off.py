@@ -79,7 +79,7 @@ if __name__ == "__main__":
     eps = 0.1
     prob = 0.8
     Ru = np.ones(num_clients)
-    alpha_val_str = '0_3'
+    alpha_val_str = '0_4'
                 
     for itt in range(len(exp_names)):
         
