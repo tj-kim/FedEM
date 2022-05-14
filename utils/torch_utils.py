@@ -6,6 +6,21 @@ import torch.nn as nn
 
 def krum_learners(learners, target_learner):
     
+    target_state_dict = target_learner.model.state_dict(keep_vars=True)
+    for key in target_state_dict:
+        
+        # Square matrix that will measure L2 distance all users
+        
+        for learner_id, learner in enumerate(learners):
+            state_dict = learner.model.state_dict(keep_vars=True)
+            for learner_id2, learner2 in enumerate(learners):
+                state_dict = learner.model.state_dict(keep_vars=True)
+                # Log L2 distance of this matrix between each learner 
+    
+        # For each row calculate n-f-2 summed distance and pick the value with the shortest one
+    
+        target_state_dict[key].data = None
+        
     return 
 
 def average_learners(

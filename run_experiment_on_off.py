@@ -40,7 +40,7 @@ import numba
 if __name__ == "__main__":
     
     exp_names = ['FedAvg_adv', 'FedEM_adv']
-#     adv_mode = [False, True]
+    adv_mode = [True, True]
         
     # Manually set argument parameters
     args_ = Args()
