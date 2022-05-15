@@ -41,6 +41,7 @@ if __name__ == "__main__":
     
     exp_names = ['FedAvg_adv', 'FedEM_adv']
     adv_mode = [True, True]
+    n_vals = [1,3]
         
     # Manually set argument parameters
     args_ = Args()
