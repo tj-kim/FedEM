@@ -122,6 +122,11 @@ class Aggregator(ABC):
 
         self.c_round = 0
         self.write_logs()
+        
+        
+        # Custom -- added for Krum aggregation
+        self.krum_mode = False
+        self.exp_adv_nodes = 0
 
     @abstractmethod
     def mix(self):
@@ -453,9 +458,16 @@ class CentralizedAggregator(Aggregator):
         for client in self.sampled_clients:
             client.step()
 
-        for learner_id, learner in enumerate(self.global_learners_ensemble):
-            learners = [client.learners_ensemble[learner_id] for client in self.clients]
-            average_learners(learners, learner, weights=self.clients_weights)
+            
+        if self.krum_mode:
+        # Krum based aggregation scheme applied 
+            for learner_id, learner in enumerate(self.global_learners_ensemble):
+                learners = [client.learners_ensemble[learner_id] for client in self.clients]
+                krum_learners(learners, target_learner, self.exp_adv_nodes):
+        else:
+            for learner_id, learner in enumerate(self.global_learners_ensemble):
+                learners = [client.learners_ensemble[learner_id] for client in self.clients]
+                average_learners(learners, learner, weights=self.clients_weights)
 
         # assign the updated model to all clients
         self.update_clients()

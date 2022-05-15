@@ -4,22 +4,47 @@ import torch
 import torch.nn as nn
 
 
-def krum_learners(learners, target_learner):
+def krum_learners(learners, target_learner, f):
+    # learners = single learner from all clients
+    # target_learner = hypothesis learner 
     
     target_state_dict = target_learner.model.state_dict(keep_vars=True)
     for key in target_state_dict:
-        
-        # Square matrix that will measure L2 distance all users
-        
-        for learner_id, learner in enumerate(learners):
-            state_dict = learner.model.state_dict(keep_vars=True)
-            for learner_id2, learner2 in enumerate(learners):
-                state_dict = learner.model.state_dict(keep_vars=True)
-                # Log L2 distance of this matrix between each learner 
-    
-        # For each row calculate n-f-2 summed distance and pick the value with the shortest one
-    
-        target_state_dict[key].data = None
+        print(key)
+        if target_state_dict[key].data.dtype == torch.float32:
+
+            distance_matrix = np.zeros([len(learners),len(learners)])
+            state_dict_vals_log = []
+
+            for learner_id, learner in enumerate(learners):
+                state_dict_vals_log += [learner.model.state_dict(keep_vars=True)[key].cpu().detach().numpy()]
+
+            for i1,i2 in itertools.product(range(len(learners)),range(len(learners))):
+                if i1 != i2 and distance_matrix[i1, i2] == 0:
+                    c = state_dict_vals_log[i1]- state_dict_vals_log[i2]
+                    distance_matrix[i1, i2] = np.linalg.norm(c)
+                    distance_matrix[i2, i1] = np.linalg.norm(c)
+
+            # from distance matrix calculate mean for n-f-2, n=num learners, f = num_sybl, 2
+            krum_vector = np.zeros(len(learners))
+            # value of k
+            k = len(learners) - f - 2  
+
+            # using np.argpartition()
+            for i in range(len(learners)):
+                result = np.argpartition(distance_matrix[i], k)
+                krum_vector[i] = np.sum(distance_matrix[i][result[:k]])
+
+            # Update weight using krum 
+            min_idx = np.argmin(krum_vector)
+            target_state_dict[key].data = learners[min_idx].model.state_dict(keep_vars=True)[key].data.clone()
+
+        else:
+            # tracked batches
+            target_state_dict[key].data.fill_(0)
+            for learner_id, learner in enumerate(learners):
+                state_dict = learner.model.state_dict()
+                target_state_dict[key].data += state_dict[key].data.clone()
         
     return 
 
