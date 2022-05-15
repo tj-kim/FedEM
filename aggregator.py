@@ -463,7 +463,7 @@ class CentralizedAggregator(Aggregator):
         # Krum based aggregation scheme applied 
             for learner_id, learner in enumerate(self.global_learners_ensemble):
                 learners = [client.learners_ensemble[learner_id] for client in self.clients]
-                krum_learners(learners, target_learner, self.exp_adv_nodes):
+                krum_learners(learners, target_learner, self.exp_adv_nodes)
         else:
             for learner_id, learner in enumerate(self.global_learners_ensemble):
                 learners = [client.learners_ensemble[learner_id] for client in self.clients]
