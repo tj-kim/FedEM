@@ -62,7 +62,8 @@ class Client(object):
             test_iterator,
             logger,
             local_steps,
-            tune_locally=False
+            tune_locally=False,
+            tune_steps=None
     ):
 
         self.learners_ensemble = learners_ensemble
