@@ -67,7 +67,7 @@ if __name__ == "__main__":
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
-        args_.lr = exp_lr[itt]
+        args_.lr = exp_lr
         args_.lr_scheduler = 'multi_step'
         args_.log_freq = 20
         args_.device = 'cuda'
