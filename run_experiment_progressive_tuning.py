@@ -40,7 +40,7 @@ import numba
 if __name__ == "__main__":
     
 
-    exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM',]
+    exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM']
     exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
     exp_num_learners = [1,3,1,3]
     exp_lr = 0.01
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         args_.mu = 0
         args_.communication_probability = 0.1
         args_.q = 1
-        args_.locally_tune_clients = True
+        args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
         args_.save_path = 'weights/neurips/cifar/local_tuning/' + exp_names[itt]

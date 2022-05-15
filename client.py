@@ -187,8 +187,8 @@ class Client(object):
 
     def update_tuned_learners(self):
         
-        if not self.tune_locally:
-            return
+#         if not self.tune_locally:
+#             return
         for learner_id, learner in enumerate(self.tuned_learners_ensemble):
             copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
             learner.fit_epochs(self.train_iterator, self.tune_steps, weights=self.samples_weights[learner_id])
