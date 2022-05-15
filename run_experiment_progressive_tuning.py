@@ -39,14 +39,15 @@ import numba
 
 if __name__ == "__main__":
     
-    #exp_names = ['fedem_defend', 'fed_avg_defend']
-    #exp_method = ['FedEM_adv', 'FedAvg_adv']
-    #exp_num_learners = [3, 1]
-    #exp_lr = [0.03, 0.01]
-    exp_names = ['fed_avg_defend']
-    exp_method = ['FedAvg_adv']
-    exp_num_learners = [1]
-    exp_lr = [0.01]
+
+    exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM',]
+    exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
+    exp_num_learners = [1,3,1,3]
+    exp_lr = 0.01
+    
+    # When we will save the model
+    tuning_steps = [5,10,20,40]
+    tuning_increments = [5,5,10,20]
     
         
     for itt in range(len(exp_names)):
@@ -62,7 +63,7 @@ if __name__ == "__main__":
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= exp_num_learners[itt]
-        args_.n_rounds = 100
+        args_.n_rounds = 150
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
@@ -74,17 +75,17 @@ if __name__ == "__main__":
         args_.mu = 0
         args_.communication_probability = 0.1
         args_.q = 1
-        args_.locally_tune_clients = False
+        args_.locally_tune_clients = True
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/cifar10_adv/' + exp_names[itt]
+        args_.save_path = '/weights/neurips/cifar/local_tuning/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
         args_.tune_steps = 10
 
         # Other Argument Parameters
         Q = 10 # update per round
-        G = 0.5
+        G = 0.15
         num_clients = 40
         S = 0.05 # Threshold
         step_size = 0.01
@@ -149,25 +150,25 @@ if __name__ == "__main__":
 
             aggregator.mix()
             
-#             # Save more often the intermediate NN
-#             if current_round% args_.save_freq == 0:
-#                 if "save_path" in args_:
-#                     save_root = os.path.join(args_.save_path)
-
-#                     os.makedirs(save_root, exist_ok=True)
-#                     aggregator.save_state_intermed(save_root, current_round)
 
             if aggregator.c_round != current_round:
                 pbar.update(1)
                 current_round = aggregator.c_round
 
+        # Save normal post 
         if "save_path" in args_:
             save_root = os.path.join(args_.save_path)
+            os.makedirs(save_root, exist_ok=True)
+            aggregator.save_state(save_root)
+#             aggregator.save_state_local(save_root)
+            
+        # Local Tuning of Clients
+        for s_idx in range(len(tuning_steps)):
+            aggregator.assign_new_local_tuning(tuning_increments[s_idx])
             for client in aggregator.clients:
                 client.update_tuned_learners()
-
-            os.makedirs(save_root, exist_ok=True)
-            aggregator.save_state_local(save_root)
+            aggregator.save_state_local(save_root, tuning_steps[s_idx])
+            
             
         del args_, aggregator, clients
         torch.cuda.empty_cache()
