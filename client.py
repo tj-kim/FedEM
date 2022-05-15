@@ -92,6 +92,11 @@ class Client(object):
 
         self.counter = 0
         self.logger = logger
+        
+        if tune_steps:
+            self.tune_steps = tune_steps
+        else:
+            self.tune_steps = self.local_steps
 
     def get_next_batch(self):
         try:
@@ -171,14 +176,22 @@ class Client(object):
     def update_learners_weights(self):
         pass
 
+#     def update_tuned_learners(self):
+#         if not self.tune_locally:
+#             return
+
+#         for learner_id, learner in enumerate(self.tuned_learners_ensemble):
+#             copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
+#             learner.fit_epochs(self.train_iterator, self.local_steps, weights=self.samples_weights[learner_id])
+
     def update_tuned_learners(self):
+        
         if not self.tune_locally:
             return
-
         for learner_id, learner in enumerate(self.tuned_learners_ensemble):
             copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
-            learner.fit_epochs(self.train_iterator, self.local_steps, weights=self.samples_weights[learner_id])
-
+            learner.fit_epochs(self.train_iterator, self.tune_steps, weights=self.samples_weights[learner_id])
+            
 
 class MixtureClient(Client):
     def update_sample_weights(self):
