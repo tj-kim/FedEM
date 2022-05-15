@@ -295,7 +295,7 @@ class Aggregator(ABC):
         else:
             self.sampled_clients = self.rng.sample(self.clients, k=self.n_clients_per_round)
             
-    def save_state_local(self, dir_path):
+    def save_state_local(self, dir_path, extra_name = None):
         """
         save the state of the aggregator, i.e., the state dictionary of each `learner` in `global_learners_ensemble`
          as `.pt` file, and `learners_weights` for each client in `self.clients` as a single numpy array (`.np` file).
@@ -309,7 +309,12 @@ class Aggregator(ABC):
         # Save global weights
         for client in self.clients:
             for learner_id, learner in enumerate(client.tuned_learners_ensemble):
-                save_path = os.path.join(dir_path, f"chkpts_{client_idx}_{learner_id}.pt")
+                
+                if extra_name is None:
+                    save_path = os.path.join(dir_path, f"chkpts_{client_idx}_{learner_id}.pt")
+                else:
+                    save_path = os.path.join(dir_path, f"chkpts_r{str(extra_name)}_{client_idx}_{learner_id}.pt")
+                
                 torch.save(learner.model.state_dict(), save_path)
             client_idx += 1
 
@@ -322,14 +327,17 @@ class Aggregator(ABC):
             ['train', learners_weights, self.clients],
             ['test', test_learners_weights, self.test_clients]
         ]:
-            save_path = os.path.join(dir_path, f"{mode}_client_weights.npy")
+            if extra_name is None:
+                save_path = os.path.join(dir_path, f"{mode}_client_weights.npy")
+            else:
+                save_path = os.path.join(dir_path, f"r{str(extra_name)}_{mode}_client_weights.npy")
 
             for client_id, client in enumerate(clients):
                 weights[client_id] = client.tuned_learners_ensemble.learners_weights
 
             np.save(save_path, weights)
 
-    def load_state_local(self, dir_path):
+    def load_state_local(self, dir_path, extra_name = None):
         """
         load the state of the aggregator, i.e., the state dictionary of each `learner` in `global_learners_ensemble`
          from a `.pt` file, and `learners_weights` for each client in `self.clients` from numpy array (`.np` file).
@@ -342,7 +350,10 @@ class Aggregator(ABC):
         for client in self.clients:
         
             for learner_id, learner in enumerate(client.learners_ensemble):
-                chkpts_path = os.path.join(dir_path, f"chkpts_{client_idx}_{learner_id}.pt")
+                if extra_name is None:
+                    chkpts_path = os.path.join(dir_path, f"chkpts_{client_idx}_{learner_id}.pt")
+                else:
+                    chkpts_path = os.path.join(dir_path, f"chkpts_r{str(extra_name)}_{client_idx}_{learner_id}.pt")
                 learner.model.load_state_dict(torch.load(chkpts_path))
                 
             client_idx += 1
@@ -354,8 +365,11 @@ class Aggregator(ABC):
             ['train', learners_weights, self.clients],
             ['test', test_learners_weights, self.test_clients]
         ]:
-            chkpts_path = os.path.join(dir_path, f"{mode}_client_weights.npy")
-
+            if extra_name is None:
+                chkpts_path = os.path.join(dir_path, f"{mode}_client_weights.npy")
+            else:
+                chpts_path = os.path.join(dir_path, f"r{str(extra_name)}_{mode}_client_weights.npy") 
+                
             weights = np.load(chkpts_path)
 
             for client_id, client in enumerate(clients):

@@ -69,7 +69,7 @@ class Client(object):
         self.n_learners = len(self.learners_ensemble)
         self.tune_locally = tune_locally
 
-        if self.tune_locally:
+        if self.tune_locally or tune_steps:
             self.tuned_learners_ensemble = deepcopy(self.learners_ensemble)
         else:
             self.tuned_learners_ensemble = None
@@ -192,6 +192,20 @@ class Client(object):
             copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
             learner.fit_epochs(self.train_iterator, self.tune_steps, weights=self.samples_weights[learner_id])
             
+#     def update_tuned_learners_intermed_save(self, save_times):
+        
+#         extended_times = [0] + save_times
+        
+#         save_steps = []
+
+#         for i in range(len(b)-1):
+#             save_steps += [extended_times[i+1] - extended_times[i]]
+        
+#         for st in save_steps:
+#             for learner_id, learner in enumerate(self.tuned_learners_ensemble):
+#                 copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
+#                 learner.fit_epochs(self.train_iterator, st, weights=self.samples_weights[learner_id])
+            
 
 class MixtureClient(Client):
     def update_sample_weights(self):
@@ -200,6 +214,7 @@ class MixtureClient(Client):
 
     def update_learners_weights(self):
         self.learners_ensemble.learners_weights = self.samples_weights.mean(dim=1)
+                
 
 
 class AgnosticFLClient(Client):
@@ -211,7 +226,8 @@ class AgnosticFLClient(Client):
             test_iterator,
             logger,
             local_steps,
-            tune_locally=False
+            tune_locally=False,
+            tune_steps=None
     ):
         super(AgnosticFLClient, self).__init__(
             learners_ensemble=learners_ensemble,
@@ -220,7 +236,8 @@ class AgnosticFLClient(Client):
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
 
         assert self.n_learners == 1, "AgnosticFLClient only supports single learner."
@@ -249,7 +266,8 @@ class FFLClient(Client):
             logger,
             local_steps,
             q=1,
-            tune_locally=False
+            tune_locally=False,
+            tune_steps=None
     ):
         super(FFLClient, self).__init__(
             learners_ensemble=learners_ensemble,
@@ -258,7 +276,8 @@ class FFLClient(Client):
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
 
         assert self.n_learners == 1, "AgnosticFLClient only supports single learner."
@@ -302,7 +321,8 @@ class Adv_MixtureClient(MixtureClient):
             logger,
             local_steps,
             tune_locally=False,
-            dataset_name = 'cifar10'
+            dataset_name = 'cifar10',
+            tune_steps=None
     ):
         super(Adv_MixtureClient, self).__init__(
             learners_ensemble=learners_ensemble,
@@ -311,7 +331,8 @@ class Adv_MixtureClient(MixtureClient):
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
 
         self.adv_proportion = 0
@@ -431,7 +452,8 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
             logger,
             local_steps,
             tune_locally=False,
-            dataset_name = 'cifar10'
+            dataset_name = 'cifar10',
+            tune_steps=None
     ):
         super(Adv_MixtureClient_DVERGE, self).__init__(
             learners_ensemble=learners_ensemble,
@@ -440,7 +462,8 @@ class Adv_MixtureClient_DVERGE(MixtureClient):
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
 
         self.adv_proportion = 0
