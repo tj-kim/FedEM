@@ -63,7 +63,7 @@ if __name__ == "__main__":
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= exp_num_learners[itt]
-        args_.n_rounds = 1
+        args_.n_rounds = 150
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
 
         # Train the model
-        print("Training..")
+        print("running trial:", itt, "out of", len(exp_names)-1)
         pbar = tqdm(total=args_.n_rounds)
         current_round = 0
         while current_round <= args_.n_rounds:
@@ -164,6 +164,7 @@ if __name__ == "__main__":
             
         # Local Tuning of Clients
         for s_idx in range(len(tuning_steps)):
+            print("tuning steps:", s_idx)
             aggregator.assign_new_local_tuning(tuning_increments[s_idx])
             for client in aggregator.clients:
                 client.update_tuned_learners()
