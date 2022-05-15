@@ -12,7 +12,7 @@ def krum_learners(learners, target_learner, f):
     
     target_state_dict = target_learner.model.state_dict(keep_vars=True)
     for key in target_state_dict:
-        print(key)
+#         print(key)
         if target_state_dict[key].data.dtype == torch.float32:
 
             distance_matrix = np.zeros([len(learners),len(learners)])
