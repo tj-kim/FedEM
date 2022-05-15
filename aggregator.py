@@ -374,6 +374,13 @@ class Aggregator(ABC):
 
             for client_id, client in enumerate(clients):
                 client.learners_ensemble.learners_weights = weights[client_id]
+    
+    def assign_new_local_tuning(self, tuning_val):
+        
+        for client in self.clients:
+            client.tune_steps = tuning_val
+            
+        return
 
 
 class NoCommunicationAggregator(Aggregator):
