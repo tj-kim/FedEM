@@ -2,6 +2,8 @@ import warnings
 
 import torch
 import torch.nn as nn
+import numpy as np
+import itertools
 
 
 def krum_learners(learners, target_learner, f):
