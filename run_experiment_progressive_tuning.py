@@ -44,6 +44,7 @@ if __name__ == "__main__":
     exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
     exp_num_learners = [1,3,1,3]
     exp_lr = 0.01
+    adv_mode = [True, True, False, False]
     
     # When we will save the model
     tuning_steps = [5,10,20,40]
@@ -123,30 +124,31 @@ if __name__ == "__main__":
         current_round = 0
         while current_round <= args_.n_rounds:
 
-            # If statement catching every Q rounds -- update dataset
-            if  current_round != 0 and current_round%Q == 0: # 
-                # print("Round:", current_round, "Calculation Adv")
-                # Obtaining hypothesis information
-                Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
-                for i in range(len(clients)):
-                    # print("client", i)
-                    temp_client = aggregator.clients[i]
-                    hyp_weights = temp_client.learners_ensemble.learners_weights
-                    Whu[i] = hyp_weights
+            if adv_mode[itt]:
+                # If statement catching every Q rounds -- update dataset
+                if  current_round != 0 and current_round%Q == 0: # 
+                    # print("Round:", current_round, "Calculation Adv")
+                    # Obtaining hypothesis information
+                    Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
+                    for i in range(len(clients)):
+                        # print("client", i)
+                        temp_client = aggregator.clients[i]
+                        hyp_weights = temp_client.learners_ensemble.learners_weights
+                        Whu[i] = hyp_weights
 
-                row_sums = Whu.sum(axis=1)
-                Whu = Whu / row_sums[:, np.newaxis]
-                Wh = np.sum(Whu,axis=0)/num_clients
+                    row_sums = Whu.sum(axis=1)
+                    Whu = Whu / row_sums[:, np.newaxis]
+                    Wh = np.sum(Whu,axis=0)/num_clients
 
-                # Solve for adversarial ratio at every client
-                Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
+                    # Solve for adversarial ratio at every client
+                    Fu = solve_proportions(G, num_clients, num_h, Du, Whu, S, Ru, step_size)
 
-                # Assign proportion and attack params
-                # Assign proportion and compute new dataset
-                for i in range(len(clients)):
-                    aggregator.clients[i].set_adv_params(Fu[i], atk_params)
-                    aggregator.clients[i].update_advnn()
-                    aggregator.clients[i].assign_advdataset()
+                    # Assign proportion and attack params
+                    # Assign proportion and compute new dataset
+                    for i in range(len(clients)):
+                        aggregator.clients[i].set_adv_params(Fu[i], atk_params)
+                        aggregator.clients[i].update_advnn()
+                        aggregator.clients[i].assign_advdataset()
 
             aggregator.mix()
             
