@@ -69,7 +69,8 @@ def init_clients(args_, root_path, logs_root):
             test_iterator=test_iterator,
             logger=logger,
             local_steps=args_.local_steps,
-            tune_locally=args_.locally_tune_clients
+            tune_locally=args_.locally_tune_clients,
+            tune_steps = args_.tune_steps
         )
 
         clients_.append(client)
