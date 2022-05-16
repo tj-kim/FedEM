@@ -385,8 +385,7 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally,
-            tune_steps = tune_steps
+            tune_locally=tune_locally
         )
     elif client_type == 'FedEM_dverge':
         return Adv_MixtureClient_DVERGE(
