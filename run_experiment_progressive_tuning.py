@@ -40,11 +40,16 @@ import numba
 if __name__ == "__main__":
     
 
-    exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM']
-    exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
-    exp_num_learners = [1,3,1,3]
+#     exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM']
+#     exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
+#     exp_num_learners = [1,3,1,3]
+#     exp_lr = 0.01
+#     adv_mode = [True, True, False, False]
+    exp_names = ['fedavg', 'fedEM']
+    exp_method = [ 'FedAvg', 'FedEM']
+    exp_num_learners = [1,3]
     exp_lr = 0.01
-    adv_mode = [True, True, False, False]
+    adv_mode = [ False, False]
     
     # When we will save the model
     tuning_steps = [5,10,20,40]
@@ -100,13 +105,14 @@ if __name__ == "__main__":
         # Generate the dummy values here
         aggregator, clients = dummy_aggregator(args_, num_clients)
 
-        # Set attack parameters
-        x_min = torch.min(clients[0].adv_nn.dataloader.x_data)
-        x_max = torch.max(clients[0].adv_nn.dataloader.x_data)
-        atk_params = PGD_Params()
-        atk_params.set_params(batch_size=1, iteration = K,
-                           target = -1, x_val_min = x_min, x_val_max = x_max,
-                           step_size = 0.05, step_norm = "inf", eps = eps, eps_norm = "inf")
+        if adv_mode[itt]:
+            # Set attack parameters
+            x_min = torch.min(clients[0].adv_nn.dataloader.x_data)
+            x_max = torch.max(clients[0].adv_nn.dataloader.x_data)
+            atk_params = PGD_Params()
+            atk_params.set_params(batch_size=1, iteration = K,
+                               target = -1, x_val_min = x_min, x_val_max = x_max,
+                               step_size = 0.05, step_norm = "inf", eps = eps, eps_norm = "inf")
 
         # Obtain the central controller decision making variables (static)
         num_h = args_.n_learners= 3
