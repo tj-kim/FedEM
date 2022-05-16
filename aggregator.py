@@ -308,7 +308,8 @@ class Aggregator(ABC):
         client_idx = 0
         # Save global weights
         for client in self.clients:
-            for learner_id, learner in enumerate(client.tuned_learners_ensemble):
+#             for learner_id, learner in enumerate(client.tuned_learners_ensemble):
+            for learner_id, learner in enumerate(client.learners_ensemble):
                 
                 if extra_name is None:
                     save_path = os.path.join(dir_path, f"chkpts_{client_idx}_{learner_id}.pt")
@@ -368,7 +369,7 @@ class Aggregator(ABC):
             if extra_name is None:
                 chkpts_path = os.path.join(dir_path, f"{mode}_client_weights.npy")
             else:
-                chpts_path = os.path.join(dir_path, f"r{str(extra_name)}_{mode}_client_weights.npy") 
+                chkpts_path = os.path.join(dir_path, f"r{str(extra_name)}_{mode}_client_weights.npy") 
                 
             weights = np.load(chkpts_path)
 
