@@ -70,10 +70,12 @@ class Client(object):
         self.n_learners = len(self.learners_ensemble)
         self.tune_locally = tune_locally
 
-        if self.tune_locally or tune_steps > 0:
-            self.tuned_learners_ensemble = deepcopy(self.learners_ensemble)
-        else:
-            self.tuned_learners_ensemble = None
+#         if self.tune_locally:
+#             self.tuned_learners_ensemble = deepcopy(self.learners_ensemble)
+#         else:
+#             self.tuned_learners_ensemble = None
+
+        self.tuned_learners_ensemble = deepcopy(self.learners_ensemble)
 
         self.binary_classification_flag = self.learners_ensemble.is_binary_classification
 
