@@ -318,6 +318,7 @@ def get_client(
         logger,
         local_steps,
         tune_locally,
+        tune_steps = None
 ):
     """
 
@@ -341,7 +342,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps = tune_steps
         )
     elif client_type == "AFL":
         return AgnosticFLClient(
@@ -372,7 +374,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps = tune_steps
         )
     elif client_type == "normal_adv":
         return Adv_Client(
@@ -382,7 +385,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps = tune_steps
         )
     elif client_type == 'FedEM_dverge':
         return Adv_MixtureClient_DVERGE(
