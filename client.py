@@ -70,7 +70,7 @@ class Client(object):
         self.n_learners = len(self.learners_ensemble)
         self.tune_locally = tune_locally
 
-        if self.tune_locally or tune_steps:
+        if self.tune_locally or tune_steps > 0:
             self.tuned_learners_ensemble = deepcopy(self.learners_ensemble)
         else:
             self.tuned_learners_ensemble = None
@@ -177,14 +177,6 @@ class Client(object):
     def update_learners_weights(self):
         pass
 
-#     def update_tuned_learners(self):
-#         if not self.tune_locally:
-#             return
-
-#         for learner_id, learner in enumerate(self.tuned_learners_ensemble):
-#             copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
-#             learner.fit_epochs(self.train_iterator, self.local_steps, weights=self.samples_weights[learner_id])
-
     def update_tuned_learners(self):
         
 #         if not self.tune_locally:
@@ -192,21 +184,9 @@ class Client(object):
         for learner_id, learner in enumerate(self.tuned_learners_ensemble):
             copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
             learner.fit_epochs(self.train_iterator, self.tune_steps, weights=self.samples_weights[learner_id])
+            copy_model(source=learner.model, target=self.learners_ensemble[learner_id].model)
             
-#     def update_tuned_learners_intermed_save(self, save_times):
-        
-#         extended_times = [0] + save_times
-        
-#         save_steps = []
 
-#         for i in range(len(b)-1):
-#             save_steps += [extended_times[i+1] - extended_times[i]]
-        
-#         for st in save_steps:
-#             for learner_id, learner in enumerate(self.tuned_learners_ensemble):
-#                 copy_model(source=self.learners_ensemble[learner_id].model, target=learner.model)
-#                 learner.fit_epochs(self.train_iterator, st, weights=self.samples_weights[learner_id])
-            
 
 class MixtureClient(Client):
     def update_sample_weights(self):

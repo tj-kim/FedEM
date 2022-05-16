@@ -63,7 +63,7 @@ if __name__ == "__main__":
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= exp_num_learners[itt]
-        args_.n_rounds = 150
+        args_.n_rounds = 1
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
@@ -75,13 +75,13 @@ if __name__ == "__main__":
         args_.mu = 0
         args_.communication_probability = 0.1
         args_.q = 1
-        args_.locally_tune_clients = False
+        args_.locally_tune_clients = True
         args_.seed = 1234
         args_.verbose = 1
         args_.save_path = 'weights/neurips/cifar/local_tuning/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
-        args_.tune_steps = 10
+        args_.tune_steps = 1
 
         # Other Argument Parameters
         Q = 10 # update per round
