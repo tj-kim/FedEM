@@ -40,11 +40,11 @@ import numba
 if __name__ == "__main__":
     
 
-#     exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM']
-#     exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
-#     exp_num_learners = [1,3,1,3]
-#     exp_lr = 0.01
-#     adv_mode = [True, True, False, False]
+    exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM']
+    exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
+    exp_num_learners = [1,3,1,3]
+    exp_lr = 0.03
+    adv_mode = [True, True, False, False]
 
 #     exp_names = ['fedavg_adv', 'fedEM_adv']
 #     exp_method = [ 'FedAvg_adv', 'FedEM_adv']
@@ -52,11 +52,11 @@ if __name__ == "__main__":
 #     exp_lr = 0.01
 #     adv_mode = [ True, True]
     
-    exp_names = ['fedavg_adv']
-    exp_method = [ 'FedAvg_adv']
-    exp_num_learners = [1]
-    exp_lr = 0.01
-    adv_mode = [ True]
+#     exp_names = ['fedavg_adv']
+#     exp_method = [ 'FedAvg_adv']
+#     exp_num_learners = [1]
+#     exp_lr = 0.03
+#     adv_mode = [ True]
     
     # When we will save the model
     tuning_steps = [5,10,20]
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/neurips/cifar/local_tuning/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar/local_tuning_03/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
         args_.tune_steps = 1
