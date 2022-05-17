@@ -40,11 +40,11 @@ import numba
 if __name__ == "__main__":
     
 
-    exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM']
-    exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
-    exp_num_learners = [1,3,1,3]
-    exp_lr = 0.03
-    adv_mode = [True, True, False, False]
+#     exp_names = ['fedavg_adv', 'fedEM_adv', 'fedavg', 'fedEM']
+#     exp_method = ['FedAvg_adv', 'FedEM_adv', 'FedAvg', 'FedEM']
+#     exp_num_learners = [1,3,1,3]
+#     exp_lr = 0.03
+#     adv_mode = [True, True, False, False]
 
 #     exp_names = ['fedavg_adv', 'fedEM_adv']
 #     exp_method = [ 'FedAvg_adv', 'FedEM_adv']
@@ -57,10 +57,16 @@ if __name__ == "__main__":
 #     exp_num_learners = [1]
 #     exp_lr = 0.03
 #     adv_mode = [ True]
+
+    exp_names = ['fedEM']
+    exp_method = ['FedEM']
+    exp_num_learners = [3]
+    exp_lr = 0.03
+    adv_mode = [False]
     
     # When we will save the model
-    tuning_steps = [5,10,20]
-    tuning_increments = [5,5,10]
+    tuning_steps = [5,10,20,30,40]
+    tuning_increments = [5,5,10,30,40]
     
         
     for itt in range(len(exp_names)):
