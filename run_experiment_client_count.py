@@ -40,10 +40,10 @@ import numba
 if __name__ == "__main__":
 
 
-    exp_names = ['c5','c10','c20','c30','c40', 'c50']
+    exp_names = ['c5','c10','c20','c30','c40']
     adv_mode = True
     
-    num_clients_list = [5,10,20,30,40,50]
+    num_clients_list = [5,10,20,30,40]
     
         
     for itt in range(len(exp_names)):
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         # Manually set argument parameters
         args_ = Args()
         args_.experiment = "cifar10"
-        args_.method = 'FedAvg_adv'
+        args_.method = 'FedEM_adv'
         args_.decentralized = False
         args_.sampling_rate = 1.0
         args_.input_dimension = None
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
-        args_.lr = 0.01
+        args_.lr = 0.03
         args_.lr_scheduler = 'multi_step'
         args_.log_freq = 20
         args_.device = 'cuda'
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/neurips/cifar/client_count/fedavg_adv/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar/client_count/fedem_adv_new/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
 
