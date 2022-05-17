@@ -45,15 +45,22 @@ if __name__ == "__main__":
 #     exp_num_learners = [1,3,1,3]
 #     exp_lr = 0.01
 #     adv_mode = [True, True, False, False]
-    exp_names = ['fedavg', 'fedEM']
-    exp_method = [ 'FedAvg', 'FedEM']
-    exp_num_learners = [1,3]
+
+#     exp_names = ['fedavg_adv', 'fedEM_adv']
+#     exp_method = [ 'FedAvg_adv', 'FedEM_adv']
+#     exp_num_learners = [1,3]
+#     exp_lr = 0.01
+#     adv_mode = [ True, True]
+    
+    exp_names = ['fedavg_adv']
+    exp_method = [ 'FedAvg_adv']
+    exp_num_learners = [1]
     exp_lr = 0.01
-    adv_mode = [ False, False]
+    adv_mode = [ True]
     
     # When we will save the model
-    tuning_steps = [5,10,20,40]
-    tuning_increments = [5,5,10,20]
+    tuning_steps = [5,10,20]
+    tuning_increments = [5,5,10]
     
         
     for itt in range(len(exp_names)):
