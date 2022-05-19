@@ -45,7 +45,7 @@ if __name__ == "__main__":
         
     # Manually set argument parameters
     args_ = Args()
-    args_.experiment = "cifar100"
+    args_.experiment = "cifar10"
     args_.method = "FedEM_adv"
     args_.decentralized = False
     args_.sampling_rate = 1.0
@@ -73,21 +73,21 @@ if __name__ == "__main__":
             # Other Argument Parameters
     Q = 10 # update per round
     G = 0.5 # 0.15 cifar 10, 0.5 cifar 100 
-    num_clients = 50 # 40 for cifar 10, 50 for cifar 100
+    num_clients = 40 # 40 for cifar 10, 50 for cifar 100
     S = 0.05 # Threshold
     step_size = 0.01
     K = 10
     eps = 0.1
     prob = 0.8
     Ru = np.ones(num_clients)
-    alpha_val_str = '4'
+    alpha_val_str = '100'
                 
     for itt in range(len(exp_names)):
         
         
         print("running trial:", itt, "out of", len(exp_names)-1)
         
-        args_.save_path = 'weights/neurips/cifar100/alpha/' + alpha_val_str + '/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar10/alpha/' + alpha_val_str + '/' + exp_names[itt]
 
         
         if exp_names[itt] == 'FedAvg_adv':
