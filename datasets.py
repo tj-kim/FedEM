@@ -10,6 +10,7 @@ from torch.utils.data import Dataset
 import numpy as np
 from PIL import Image
 
+import pandas as pd
 
 class TabularDataset(Dataset):
     """
@@ -516,3 +517,52 @@ def get_mnist():
         ])
 
     return mnist_data, mnist_targets
+
+
+def get_movieLens():
+    data_path = os.path.join("data", "movieLens")
+    
+    X = np.load(os.path.join(data_path, 'ratings.npy'))
+    Y = np.load(os.path.join(data_path, 'labels.npy'))
+
+    return torch.tensor(X).float(), torch.tensor(Y)
+
+class MovieLens(Dataset):
+    """
+    Constructs a subset of MovieLens dataset from a csv file;
+    Attributes
+    ----------
+    indices: iterable of integers
+    transform
+    data
+    targets
+    Methods
+    -------
+    __init__
+    __len__
+    __getitem__
+    """
+
+    def __init__(self, csv_path, movieLensData=None):
+        """
+        :param path: path to .pkl file; expected to store list of indices
+        :param celeba_data: Concatenated train_test data
+        :param transform:
+        """
+        with open(csv_path,'rb') as f:
+            self.indices = pickle.load(f)
+        
+        if movieLensData == None:
+            self.data, self.targets = get_movieLens()
+        else:
+            self.data = movieLensData[0]
+            self.targets = movieLensData[1]
+
+        self.data = self.data[self.indices]
+        self.targets = self.targets[self.indices]
+
+    def __len__(self):
+        return len(self.targets)
+
+    def __getitem__(self, index):
+        return self.data[index].unsqueeze(0), int(self.targets[index]), index

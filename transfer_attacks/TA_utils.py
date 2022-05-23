@@ -249,12 +249,12 @@ def calc_prop_objective(G, num_h, Du, Whu, Fu):
     Wh = np.sum(Whu,axis=0)/N
     obj = 0
     D = np.sum(Du)
-    for n in range(num_h):    
+    for n in range(num_h):
         obj += np.abs(np.sum(Fu * Du * Whu[:,n])- G * D * Wh[n]) * 1/D
     return obj
 
 # Perform np.mean without the diagonal
-def avg_nondiag(array2d):
+def avg_nondiag(array2d, skipNan = False):
     d1 = array2d.shape[0]
     d2 = array2d.shape[1]
     
@@ -263,7 +263,7 @@ def avg_nondiag(array2d):
     
     for i1 in range(d1):
         for i2 in range(d2):
-            if i1 != i2:
+            if i1 != i2 and ((not skipNan)or(skipNan and not np.isnan(array2d[i1,i2]))):
                 counter+=1
                 val += array2d[i1,i2]
     
@@ -298,7 +298,7 @@ def make_metric_table(exp_list, metric, row_names, col_names, avg_diag_flag = Tr
     
     return df
 
-def load_client_data(clients, c_id, mode = 'test'):
+def load_client_data(clients, c_id, conditional=False, mode = 'test', models=[]):
     
     data_x = []
     data_y = []
@@ -320,6 +320,12 @@ def load_client_data(clients, c_id, mode = 'test'):
         for (x,y,idx) in daniloader.dataset:
             data_x.append(x)
             data_y.append(y)
+    
+    if conditional:
+        print("conditional")
+        data_x, data_y = load_correctly_classified_client_data(models, data_x, data_y)
+    
+    print(len(data_x))
 
     data_x = torch.stack(data_x)
     try:
@@ -330,3 +336,28 @@ def load_client_data(clients, c_id, mode = 'test'):
     dataloader = Custom_Dataloader(data_x, data_y)
     
     return dataloader
+
+def load_correctly_classified_client_data(models, data_x, data_y):
+    # selecting the datapoints that are correctly classified by all the models
+    X = []
+    Y = []
+
+    for x, y in zip(data_x, data_y):
+        is_correctly_classified = True
+        x = torch.unsqueeze(x,0).cuda()
+        y = y.cuda()
+        #print(x.size())
+        for model in models:
+            model.eval()
+            y_pred = torch.argmax(model.forward(x))
+            #print("y_pred", y_pred)
+            #print("")
+            if y_pred != y:
+                is_correctly_classified = False
+                break
+
+        if is_correctly_classified:
+            X.append(torch.squeeze(x,0))
+            Y.append(y)
+
+    return X, Y

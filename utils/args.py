@@ -26,6 +26,12 @@ def args_to_string(args):
 def parse_args(args_list=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        '--tune_steps',
+        help='tune_steps',
+        type=int,
+	default=None
+    ) 
+    parser.add_argument(
         'experiment',
         help='name of experiment',
         type=str

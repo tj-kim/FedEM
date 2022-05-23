@@ -57,7 +57,6 @@ def get_learner(
     :return: Learner
     """
     torch.manual_seed(seed)
-
     if name == "synthetic":
         if output_dim == 2:
             criterion = nn.BCEWithLogitsLoss(reduction="none").to(device)
@@ -108,7 +107,13 @@ def get_learner(
                 n_layers=SHAKESPEARE_CONFIG["n_layers"]
             ).to(device)
         is_binary_classification = False
-
+    elif name=="movieLens":
+        criterion = nn.CrossEntropyLoss(reduction="none").to(device)
+        metric = accuracy
+        model = MovieLensCNN(n_classes=5).to(device)
+        #model = get_mobilenet(n_classes=5).to(device)
+        # model = get_resnet18(n_classes=10).to(device)
+        is_binary_classification = False
     else:
         raise NotImplementedError
 
@@ -221,6 +226,8 @@ def get_loaders(type_, root_path, batch_size, is_validation):
         inputs, targets = get_emnist()
     elif type_ == "mnist":
         inputs, targets = get_mnist()
+    elif type_ == "movieLens":
+        inputs, targets = get_movieLens()
     else:
         inputs, targets = None, None
 
@@ -296,6 +303,8 @@ def get_loader(type_, path, batch_size, train, inputs=None, targets=None):
         dataset = CharacterDataset(path, chunk_len=SHAKESPEARE_CONFIG["chunk_len"])
     elif type_ == "mnist":
         dataset = SubMNIST(path, mnist_data=inputs, mnist_targets=targets)
+    elif type_=="movieLens":
+        dataset = MovieLens(path, (inputs, targets))
     else:
         raise NotImplementedError(f"{type_} not recognized type; possible are {list(LOADER_TYPE.keys())}")
 
@@ -304,7 +313,6 @@ def get_loader(type_, path, batch_size, train, inputs=None, targets=None):
 
     # drop last batch, because of BatchNorm layer used in mobilenet_v2
     drop_last = ((type_ == "cifar100") or (type_ == "cifar10")) and (len(dataset) > batch_size) and train
-
     return DataLoader(dataset, batch_size=batch_size, shuffle=train, drop_last=drop_last)
 
 
@@ -318,6 +326,7 @@ def get_client(
         logger,
         local_steps,
         tune_locally,
+        tune_steps
 ):
     """
 
@@ -341,7 +350,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
     elif client_type == "AFL":
         return AgnosticFLClient(
@@ -351,7 +361,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
     elif client_type == "FFL":
         return FFLClient(
@@ -362,7 +373,8 @@ def get_client(
             logger=logger,
             local_steps=local_steps,
             tune_locally=tune_locally,
-            q=q
+            q=q,
+            tune_steps=tune_steps
         )
     elif client_type == "FedEM_adv":
         return Adv_MixtureClient(
@@ -372,7 +384,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
     elif client_type == "normal_adv":
         return Adv_Client(
@@ -382,7 +395,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
     else:
         return Client(
@@ -392,7 +406,8 @@ def get_client(
             test_iterator=test_iterator,
             logger=logger,
             local_steps=local_steps,
-            tune_locally=tune_locally
+            tune_locally=tune_locally,
+            tune_steps=tune_steps
         )
 
 

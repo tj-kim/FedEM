@@ -27,3 +27,12 @@ def unnormalize_femnist(normed):
     a = unnormalize(normed)
     b = a.clone().detach().requires_grad_(True)
     return b
+
+def unnormalize_movieLens(normed):
+    mean = torch.tensor([0.0,0.0,0.0])
+    std = torch.tensor([0.5,0.5,0.5])
+
+    unnormalize = Normalize((-mean / std).tolist(), (1.0 / std).tolist())
+    a = unnormalize(normed)
+    b = a.clone().detach().requires_grad_(True)
+    return b

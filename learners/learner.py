@@ -169,7 +169,7 @@ class Learner:
         global_loss = 0.
         global_metric = 0.
         n_samples = 0
-
+        
         for x, y, indices in iterator:
             x = x.to(self.device).type(torch.float32)
             y = y.to(self.device)
@@ -182,15 +182,16 @@ class Learner:
             self.optimizer.zero_grad()
 
             y_pred = self.model(x)
-
-            loss_vec = self.criterion(y_pred, y)
+            try:
+                loss_vec = self.criterion(y_pred, y.squeeze(1))
+            except:
+                loss_vec = self.criterion(y_pred, y)
             if weights is not None:
                 weights = weights.to(self.device)
                 loss = (loss_vec.T @ weights[indices]) / loss_vec.size(0)
             else:
                 loss = loss_vec.mean()
             loss.backward()
-
             self.optimizer.step()
 
             global_loss += loss.detach() * loss_vec.size(0)
@@ -221,7 +222,7 @@ class Learner:
                     y = y.type(torch.float32).unsqueeze(1)
 
                 y_pred = self.model(x)
-                all_losses[indices] = self.criterion(y_pred, y).squeeze()
+                all_losses[indices] = self.criterion(y_pred, y)
 
         return all_losses
 

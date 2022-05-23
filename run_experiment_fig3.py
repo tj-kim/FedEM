@@ -39,11 +39,16 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['local_defend', 'fed_avg_defend','fedem_defend']
-    exp_method = ['local_adv','FedAvg_adv','FedEM_adv']
-    exp_num_learners = [1,1,3]
-    exp_lr = [0.03, 0.01, 0.03]
+    exp_names = ['local_defend', 'fed_avg_defend']
+    exp_method = ['local_adv','FedAvg_adv']
+    exp_num_learners = [1,1]
+    exp_lr = [0.03, 0.01]
     
+    #exp_names = ['fedem_defend_4learners']
+    #exp_method = ['FedEM_adv']
+    #exp_num_learners = [4]
+    #exp_lr = [0.03]
+
         
     for itt in range(len(exp_names)):
         
@@ -58,8 +63,8 @@ if __name__ == "__main__":
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= exp_num_learners[itt]
-        args_.n_rounds = 201
-        args_.bz = 128
+        args_.n_rounds = 150
+        args_.bz = 2
         args_.local_steps = 1
         args_.lr_lambda = 0
         args_.lr = exp_lr[itt]
@@ -76,11 +81,12 @@ if __name__ == "__main__":
         args_.save_path = 'weights/final/cifar100/fig3/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 10
+        args_.tune_steps = None
 
         # Other Argument Parameters
         Q = 10 # update per round
         G = 0.5
-        num_clients = 40
+        num_clients = 50
         S = 0.05 # Threshold
         step_size = 0.01
         K = 10
@@ -102,7 +108,7 @@ if __name__ == "__main__":
                            step_size = 0.05, step_norm = "inf", eps = eps, eps_norm = "inf")
 
         # Obtain the central controller decision making variables (static)
-        num_h = args_.n_learners= 3
+        num_h = args_.n_learners
         Du = np.zeros(len(clients))
 
         for i in range(len(clients)):
@@ -119,7 +125,7 @@ if __name__ == "__main__":
 
             # If statement catching every Q rounds -- update dataset
             if  current_round != 0 and current_round%Q == 0: # 
-                # print("Round:", current_round, "Calculation Adv")
+                print("Round:", current_round, "Calculation Adv")
                 # Obtaining hypothesis information
                 Whu = np.zeros([num_clients,num_h]) # Hypothesis weight for each user
                 for i in range(len(clients)):
@@ -127,6 +133,7 @@ if __name__ == "__main__":
                     temp_client = aggregator.clients[i]
                     hyp_weights = temp_client.learners_ensemble.learners_weights
                     Whu[i] = hyp_weights
+                    #print("weights", hyp_weights)
 
                 row_sums = Whu.sum(axis=1)
                 Whu = Whu / row_sums[:, np.newaxis]
@@ -164,4 +171,5 @@ if __name__ == "__main__":
             
         del args_, aggregator, clients
         torch.cuda.empty_cache()
-            
+           
+

@@ -132,6 +132,8 @@ class LearnersEnsemble(object):
         """
         if self.is_binary_classification:
             criterion = nn.BCELoss(reduction="none")
+        elif self.is_binary_classification is None:
+            criterion = self.learners[0].criterion
         else:
             criterion = nn.NLLLoss(reduction="none")
 
@@ -152,6 +154,8 @@ class LearnersEnsemble(object):
                 for learner_id, learner in enumerate(self.learners):
                     if self.is_binary_classification:
                         y_pred += self.learners_weights[learner_id] * torch.sigmoid(learner.model(x))
+                    elif self.is_binary_classification is None:
+                        y_pred += self.learners_weights[learner_id] *learner.model(x)
                     else:
                         y_pred += self.learners_weights[learner_id] * F.softmax(learner.model(x), dim=1)
 
@@ -161,6 +165,8 @@ class LearnersEnsemble(object):
                     y = y.type(torch.float32).unsqueeze(1)
                     global_loss += criterion(y_pred, y).sum().item()
                     y_pred = torch.logit(y_pred, eps=1e-10)
+                elif self.is_binary_classification is None:
+                    global_loss += criterion(y_pred, y).sum().item()
                 else:
                     global_loss += criterion(torch.log(y_pred), y).sum().item()
 

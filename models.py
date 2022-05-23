@@ -1,8 +1,9 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 import torchvision.models as models
-
+from itertools import zip_longest
 
 class LinearLayer(nn.Module):
     def __init__(self, input_dimension, num_classes, bias=True):
@@ -169,4 +170,23 @@ def get_resnet34(n_classes):
     model = models.resnet34(pretrained=True)
     model.fc = nn.Linear(model.fc.in_features, n_classes)
 
-    return model
+class MovieLensCNN(nn.Module):
+    def __init__(self, n_classes):
+        super(MovieLensCNN, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.pool2 = nn.MaxPool2d(2, 2)
+        self.pool3 = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(32, 64, 5)
+        self.conv3 = nn.Conv2d(64, 128, 5)
+        self.fc1 = nn.Linear(8960, 2048)
+        self.output = nn.Linear(2048, n_classes)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool2(F.relu(self.conv2(x)))
+        x = self.pool3(F.relu(self.conv3(x)))
+        x = x.view(-1, 8960)
+        x = F.relu(self.fc1(x))
+        x = self.output(x)
+        return x
