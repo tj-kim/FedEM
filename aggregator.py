@@ -122,6 +122,11 @@ class Aggregator(ABC):
 
         self.c_round = 0
         self.write_logs()
+        
+        
+        # Custom -- added for Krum aggregation
+        self.krum_mode = False
+        self.exp_adv_nodes = 0
 
     @abstractmethod
     def mix(self):
@@ -289,6 +294,93 @@ class Aggregator(ABC):
                 )
         else:
             self.sampled_clients = self.rng.sample(self.clients, k=self.n_clients_per_round)
+            
+    def save_state_local(self, dir_path, extra_name = None):
+        """
+        save the state of the aggregator, i.e., the state dictionary of each `learner` in `global_learners_ensemble`
+         as `.pt` file, and `learners_weights` for each client in `self.clients` as a single numpy array (`.np` file).
+
+        Save each of the local clients instead and load of the local clients instead
+
+        :param dir_path:
+        """
+        
+        client_idx = 0
+        # Save global weights
+        for client in self.clients:
+            for learner_id, learner in enumerate(client.tuned_learners_ensemble):
+                
+                if extra_name is None:
+                    save_path = os.path.join(dir_path, f"chkpts_{client_idx}_{learner_id}.pt")
+                else:
+                    save_path = os.path.join(dir_path, f"chkpts_r{str(extra_name)}_{client_idx}_{learner_id}.pt")
+                
+                torch.save(learner.model.state_dict(), save_path)
+            client_idx += 1
+
+        learners_weights = np.zeros((self.n_clients, self.n_learners))
+        test_learners_weights = np.zeros((self.n_test_clients, self.n_learners))
+
+        # Save local weights
+        
+        for mode, weights, clients in [
+            ['train', learners_weights, self.clients],
+            ['test', test_learners_weights, self.test_clients]
+        ]:
+            if extra_name is None:
+                save_path = os.path.join(dir_path, f"{mode}_client_weights.npy")
+            else:
+                save_path = os.path.join(dir_path, f"r{str(extra_name)}_{mode}_client_weights.npy")
+
+            for client_id, client in enumerate(clients):
+                weights[client_id] = client.tuned_learners_ensemble.learners_weights
+
+            np.save(save_path, weights)
+
+    def load_state_local(self, dir_path, extra_name = None):
+        """
+        load the state of the aggregator, i.e., the state dictionary of each `learner` in `global_learners_ensemble`
+         from a `.pt` file, and `learners_weights` for each client in `self.clients` from numpy array (`.np` file).
+
+        :param dir_path:
+        """
+        
+        client_idx = 0
+        # Load global weights
+        for client in self.clients:
+        
+            for learner_id, learner in enumerate(client.learners_ensemble):
+                if extra_name is None:
+                    chkpts_path = os.path.join(dir_path, f"chkpts_{client_idx}_{learner_id}.pt")
+                else:
+                    chkpts_path = os.path.join(dir_path, f"chkpts_r{str(extra_name)}_{client_idx}_{learner_id}.pt")
+                learner.model.load_state_dict(torch.load(chkpts_path))
+                
+            client_idx += 1
+
+        learners_weights = np.zeros((self.n_clients, self.n_learners))
+        test_learners_weights = np.zeros((self.n_test_clients, self.n_learners))
+
+        for mode, weights, clients in [
+            ['train', learners_weights, self.clients],
+            ['test', test_learners_weights, self.test_clients]
+        ]:
+            if extra_name is None:
+                chkpts_path = os.path.join(dir_path, f"{mode}_client_weights.npy")
+            else:
+                chpts_path = os.path.join(dir_path, f"r{str(extra_name)}_{mode}_client_weights.npy") 
+                
+            weights = np.load(chkpts_path)
+
+            for client_id, client in enumerate(clients):
+                client.learners_ensemble.learners_weights = weights[client_id]
+    
+    def assign_new_local_tuning(self, tuning_val):
+        
+        for client in self.clients:
+            client.tune_steps = tuning_val
+            
+        return
 
 
 class NoCommunicationAggregator(Aggregator):
@@ -387,9 +479,16 @@ class CentralizedAggregator(Aggregator):
         for client in self.sampled_clients:
             client.step()
 
-        for learner_id, learner in enumerate(self.global_learners_ensemble):
-            learners = [client.learners_ensemble[learner_id] for client in self.clients]
-            average_learners(learners, learner, weights=self.clients_weights)
+            
+        if self.krum_mode:
+        # Krum based aggregation scheme applied 
+            for learner_id, learner in enumerate(self.global_learners_ensemble):
+                learners = [client.learners_ensemble[learner_id] for client in self.clients]
+                krum_learners(learners, learner, self.exp_adv_nodes)
+        else:
+            for learner_id, learner in enumerate(self.global_learners_ensemble):
+                learners = [client.learners_ensemble[learner_id] for client in self.clients]
+                average_learners(learners, learner, weights=self.clients_weights)
 
         # assign the updated model to all clients
         self.update_clients()

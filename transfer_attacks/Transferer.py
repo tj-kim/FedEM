@@ -17,7 +17,8 @@ class Transferer():
     def __init__(self, models_list, dataloader):
         
         self.models_list = models_list
-        self.dataloader = dataloader 
+        self.dataloader = dataloader
+        self.test_models = None
         
         # Matrix to Record Performance (Old Metrics)
         self.orig_acc_transfers = {} # Benign point accuracy
@@ -115,7 +116,7 @@ class Transferer():
         for i in self.victim_idxs:
             self.victims[i] = copy.deepcopy(Personalized_NN(self.models_list[i]))
     
-    def send_to_victims(self, client_idxs):
+    def send_to_victims(self, client_idxs, conditional=False):
         """
         Send pre-generated adversarial perturbations 
         client_idxs - list of indices of clients we want to attack (just victims)
@@ -123,12 +124,14 @@ class Transferer():
         Then record the attack success stats accordingly
         """
         
+        
         for i in client_idxs:
           
             self.victims[i].forward_transfer(self.x_orig,self.x_adv,
                                          self.y_orig,self.y_adv,
                                          self.y_true, self.atk_params.target, 
-                                         print_info=False)
+                                         print_info=False,
+                                         conditional=conditional)
 
             # Record Performance
             self.orig_acc_transfers_robust[i] = self.victims[i].orig_test_acc_robust

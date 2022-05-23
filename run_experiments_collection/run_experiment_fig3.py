@@ -51,7 +51,7 @@ if __name__ == "__main__":
         
         # Manually set argument parameters
         args_ = Args()
-        args_.experiment = "cifar10"
+        args_.experiment = "cifar100"
         args_.method = exp_method[itt]
         args_.decentralized = False
         args_.sampling_rate = 1.0
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/final/cifar/fig3/' + exp_names[itt]
+        args_.save_path = 'weights/final/cifar100/fig3/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 10
 

@@ -7,6 +7,7 @@ class Custom_Dataloader:
         self.y_data = y_data # Tensor + cuda
         
     def load_batch(self,batch_size,mode = 'test'):
+        print(f'self.y_data.shape {self.y_data.shape} batch_size {batch_size}')
         samples = random.sample(range(self.y_data.shape[0]),batch_size)
         out_x_data = self.x_data[samples].to(device='cuda')
         out_y_data = self.y_data[samples].to(device='cuda')

@@ -69,7 +69,8 @@ def init_clients(args_, root_path, logs_root):
             test_iterator=test_iterator,
             logger=logger,
             local_steps=args_.local_steps,
-            tune_locally=args_.locally_tune_clients
+            tune_locally=args_.locally_tune_clients,
+            tune_steps=args_.tune_steps
         )
 
         clients_.append(client)
@@ -100,7 +101,11 @@ def run_experiment(args_):
         root_path=os.path.join(data_dir, "test"),
         logs_root=os.path.join(logs_root, "test")
     )
-
+    print("Initialization Completed") 
+#     print("number of clients", len(clients))
+#     for client in clients:
+#         print(client.n_test_samples)
+    
     logs_path = os.path.join(logs_root, "train", "global")
     os.makedirs(logs_path, exist_ok=True)
     global_train_logger = SummaryWriter(logs_path)
@@ -108,7 +113,9 @@ def run_experiment(args_):
     logs_path = os.path.join(logs_root, "test", "global")
     os.makedirs(logs_path, exist_ok=True)
     global_test_logger = SummaryWriter(logs_path)
+    
 
+    print("Learners Ensemble")
     global_learners_ensemble = \
         get_learners_ensemble(
             n_learners=args_.n_learners,
@@ -147,7 +154,7 @@ def run_experiment(args_):
             verbose=args_.verbose,
             seed=args_.seed
         )
-
+    
     print("Training..")
     pbar = tqdm(total=args_.n_rounds)
     current_round = 0
@@ -158,6 +165,12 @@ def run_experiment(args_):
         if aggregator.c_round != current_round:
             pbar.update(1)
             current_round = aggregator.c_round
+
+        #if current_round%5==0:
+            #save_root = os.path.join(args_.save_path+"_"+str(current_round))
+            #os.makedirs(save_root, exist_ok=True)
+            #aggregator.save_state(save_root)
+
 
     if "save_path" in args_:
         save_root = os.path.join(args_.save_path)

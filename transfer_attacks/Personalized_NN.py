@@ -17,6 +17,7 @@ import copy
 # from transfer_attacks.utils import cuda
 from transfer_attacks.projected_gradient_descent import *
 from transfer_attacks.utils import *
+import torch.nn.functional as F
 
 class Personalized_NN(nn.Module):
     """
@@ -56,7 +57,6 @@ class Personalized_NN(nn.Module):
         
         if torch.cuda.is_available():
             x = x.cuda()
-        
         x = self.trained_network.forward(x)
         
         return x
@@ -81,9 +81,87 @@ class Personalized_NN(nn.Module):
             
         return (h_adv, h_orig, h_adv_category, h_orig_category)
         
-    
     def forward_transfer(self, x_orig, x_adv, y_orig, y_adv,
-                         true_labels, target, transfer_diag = True, print_info = False):
+                         true_labels, target, transfer_diag=True, print_info=False, conditional=False):
+        """
+        Assume that input images are in pytorch tensor format
+        """
+        self.eval()
+
+        #print("debug",x_orig.size())
+
+        # Cuda Availability
+        if torch.cuda.is_available():
+            (y_orig, y_adv) = (y_orig.cuda(), y_adv.cuda())
+
+        batch_size = y_orig.shape[0]
+
+        # Forward Two Input Types
+        h_orig = self.forward(x_orig)
+        h_orig_category = torch.argmax(h_orig, dim=1)
+
+        if conditional:
+            idxs = torch.where(true_labels == h_orig_category, 1, 0) == 1
+            x_orig = x_orig[idxs]
+            x_adv = x_adv[idxs]
+            y_orig = y_orig[idxs]
+            y_adv = y_adv[idxs]
+            batch_size = y_orig.shape[0] 
+            true_labels = true_labels[idxs]
+            h_orig = self.forward(x_orig)
+            h_orig_category = torch.argmax(h_orig, dim=1)
+        
+        h_adv = self.forward(x_adv)
+        h_adv_category = torch.argmax(h_adv, dim=1)
+
+        
+        # Record Different Parameters
+        self.orig_test_acc = (h_orig_category == true_labels).float().sum()/batch_size
+        self.adv_test_acc = (h_adv_category == true_labels).float().sum()/batch_size # alter
+
+        self.orig_output_sim = (h_orig_category == y_orig).float().sum()/batch_size
+        self.adv_output_sim = (h_adv_category == y_adv).float().sum()/batch_size
+        
+        self.orig_target_achieve = (h_orig_category == target).float().sum()/batch_size
+        self.adv_target_achieve = (h_adv_category == target).float().sum()/batch_size # alter
+        
+        if transfer_diag and target > -1:
+            # adv test acc
+            true_label_idx = true_labels != target
+            h_adv_conditioned = h_adv_category[true_label_idx]
+            true_labels_conditioned = true_labels[true_label_idx]
+            new_batch_size = true_labels_conditioned.shape[0]
+            self.adv_test_acc = (h_adv_conditioned == true_labels_conditioned).float().sum()/new_batch_size
+            
+            # adv target achieve
+            self.adv_target_achieve = (h_adv_conditioned == target).float().sum()/new_batch_size
+        
+        # Record based on indices
+        self.adv_indices = h_adv_category == target
+        self.robust_indices = h_adv_category != target
+        
+        # Record split losses
+        self.orig_test_acc_robust = (h_orig_category[self.robust_indices] == true_labels[self.robust_indices]).float().sum()/h_orig_category[self.robust_indices].shape[0]
+        self.orig_output_sim_robust = (h_orig_category[self.robust_indices] == y_orig[self.robust_indices]).float().sum()/h_orig_category[self.robust_indices].shape[0]
+        
+        self.orig_test_acc_adv = (h_orig_category[self.adv_indices] == true_labels[self.adv_indices]).float().sum()/h_orig_category[self.adv_indices].shape[0]
+        self.orig_output_sim_adv = (h_orig_category[self.adv_indices] == y_orig[self.adv_indices]).float().sum()/h_orig_category[self.adv_indices].shape[0]
+            
+
+        # Print Relevant Information
+        if print_info:
+            print("---- Attack Transfer:", "----\n")
+            print("         Orig Test Acc:", self.orig_test_acc.item())
+            print("          Adv Test Acc:", self.adv_test_acc.item())
+            print("Orig Output Similarity:", self.orig_output_sim.item())
+            print(" Adv Output Similarity:", self.adv_output_sim.item())
+            print("       Orig Target Hit:", self.orig_target_achieve.item())
+            print("        Adv Target Hit:", self.adv_target_achieve.item())
+            
+        return (h_adv, h_orig, h_adv_category, h_orig_category) 
+
+    def forward_transfer1(self, x_orig, x_adv, y_orig, y_adv,
+                         true_labels, target, transfer_diag = True, print_info = False, test_models = None):
         """
         Assume that input images are in pytorch tensor format
         """
@@ -96,10 +174,20 @@ class Personalized_NN(nn.Module):
         batch_size = y_orig.shape[0]
         
         # Forward Two Input Types
-        h_adv = self.forward(x_adv)
-        h_orig = self.forward(x_orig)
-        h_adv_category = torch.argmax(h_adv,dim = 1)
-        h_orig_category = torch.argmax(h_orig,dim = 1)
+       # h_adv = self.forward(x_adv)
+        #h_orig = self.forward(x_orig)
+        
+#         with torch.no_grad():
+# #             print(test_models[1])
+# #             print(test_models[0])
+#             h_orig = test_models[0][0]*F.softmax(test_models[1][0].model(x_orig),dim=-1) + test_models[0][1]*F.softmax(test_models[1][1].model(x_orig), dim=-1)
+#             h_orig += test_models[0][2]*F.softmax(test_models[1][2].model(x_orig), dim=-1)
+#             h_orig += test_models[0][2]*F.softmax(test_models[1][2].model(x_orig), dim=-1)
+        
+#         h_orig = torch.clamp(h_orig, min=0., max=1.)
+    
+        #h_adv_category = torch.argmax(h_adv,dim = 1)
+        #h_orig_category = torch.argmax(h_orig,dim = 1)
         
         # Record Different Parameters
         self.orig_test_acc = (h_orig_category == true_labels).float().sum()/batch_size
@@ -309,7 +397,11 @@ class Adv_NN(Personalized_NN):
     
         data_x, data_y = self.dataloader.load_batch(batch_size, mode=mode)
         
-        self.x_orig  = data_x.reshape(batch_size, data_x.shape[1],data_x.shape[2],data_x.shape[3])
+        if len(data_x.shape) == 4:
+            self.x_orig  = data_x.reshape(batch_size, data_x.shape[1],data_x.shape[2],data_x.shape[3])
+        else:
+            print(data_x.shape)
+            self.x_orig  = data_x.reshape(batch_size, data_x.shape[1])
         self.y_orig = data_y.type(torch.LongTensor)
         
         if torch.cuda.is_available():

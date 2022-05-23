@@ -19,8 +19,8 @@ N_FINE_LABELS = 100
 N_COARSE_LABELS = 20
 N_COMPONENTS = 3
 SEED = 12345
-RAW_DATA_PATH = "raw_data/"
-PATH = "all_data/"
+RAW_DATA_PATH = "data/cifar100/raw_data/"
+PATH = "data/cifar100/all_data/"
 
 COARSE_LABELS =\
     np.array([
