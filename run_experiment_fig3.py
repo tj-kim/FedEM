@@ -39,10 +39,15 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['local_defend', 'fed_avg_defend','fedem_defend']
-    exp_method = ['local_adv','FedAvg_adv','FedEM_adv']
-    exp_num_learners = [1,1,3]
-    exp_lr = [0.03, 0.01, 0.03]
+#     exp_names = ['local_defend', 'fed_avg_defend','fedem_defend']
+#     exp_method = ['local_adv','FedAvg_adv','FedEM_adv']
+#     exp_num_learners = [1,1,3]
+#     exp_lr = [0.03, 0.01, 0.03]
+    
+    exp_names = ['fed_avg_beta_2','fedem_beta_2']
+    exp_method = ['FedAvg_adv','FedEM_adv']
+    exp_num_learners = [1,3]
+    exp_lr = [0.01, 0.03]
     
         
     for itt in range(len(exp_names)):
@@ -73,7 +78,7 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/final/cifar/fig3/' + exp_names[itt]
+        args_.save_path = 'weights/aistats/cifar10/alpha/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 10
 
@@ -137,10 +142,10 @@ if __name__ == "__main__":
 
                 # Assign proportion and attack params
                 # Assign proportion and compute new dataset
-                for i in range(len(clients)):
-                    aggregator.clients[i].set_adv_params(Fu[i], atk_params)
-                    aggregator.clients[i].update_advnn()
-                    aggregator.clients[i].assign_advdataset()
+#                 for i in range(len(clients)):
+#                     aggregator.clients[i].set_adv_params(Fu[i], atk_params)
+#                     aggregator.clients[i].update_advnn()
+#                     aggregator.clients[i].assign_advdataset()
 
             aggregator.mix()
             
@@ -150,7 +155,7 @@ if __name__ == "__main__":
                     save_root = os.path.join(args_.save_path)
 
                     os.makedirs(save_root, exist_ok=True)
-                    aggregator.save_state_intermed(save_root, current_round)
+#                     aggregator.save_state_intermed(save_root, current_round)
 
             if aggregator.c_round != current_round:
                 pbar.update(1)
