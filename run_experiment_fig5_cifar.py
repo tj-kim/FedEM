@@ -70,7 +70,7 @@ if __name__ == "__main__":
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= n_learners
-        args_.n_rounds = 150
+        args_.n_rounds = 100
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
@@ -158,12 +158,12 @@ if __name__ == "__main__":
             aggregator.mix()
             
             # Save more often the intermediate NN
-            if current_round% args_.save_freq == 0:
-                if "save_path" in args_:
-                    save_root = os.path.join(args_.save_path)
+#             if current_round% args_.save_freq == 0:
+#                 if "save_path" in args_:
+#                     save_root = os.path.join(args_.save_path)
 
-                    os.makedirs(save_root, exist_ok=True)
-                    aggregator.save_state_intermed(save_root, current_round)
+#                     os.makedirs(save_root, exist_ok=True)
+#                     aggregator.save_state_intermed(save_root, current_round)
 
             if aggregator.c_round != current_round:
                 pbar.update(1)
