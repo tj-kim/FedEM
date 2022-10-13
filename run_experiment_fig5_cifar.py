@@ -40,14 +40,21 @@ import numba
 if __name__ == "__main__":
     
 
+#     exp_names = ['FedEMadv_K1',
+#                  'FedEMadv_K3',
+#                  'FedEMadv_K5',
+#                  'FedEMadv_K10',
+#                  'FedEMadv_K20',
+#                  'FedEMadv_K30']
+    
+#     K_val = [1, 3, 5, 10, 20, 30]
+
     exp_names = ['FedEMadv_K1',
                  'FedEMadv_K3',
                  'FedEMadv_K5',
-                 'FedEMadv_K10',
-                 'FedEMadv_K20',
-                 'FedEMadv_K30']
+                 'FedEMadv_K10']
     
-    K_val = [1, 3, 5, 10, 20, 30]
+    K_val = [1, 3, 5, 10]
     n_learners = 3
     
     for itt in range(len(exp_names)):
@@ -63,7 +70,7 @@ if __name__ == "__main__":
         args_.input_dimension = None
         args_.output_dimension = None
         args_.n_learners= n_learners
-        args_.n_rounds = 201
+        args_.n_rounds = 150
         args_.bz = 128
         args_.local_steps = 1
         args_.lr_lambda = 0
