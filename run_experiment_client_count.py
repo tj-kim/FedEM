@@ -53,7 +53,7 @@ if __name__ == "__main__":
         # Manually set argument parameters
         args_ = Args()
         args_.experiment = "cifar10"
-        args_.method = 'FedAvg_adv'
+        args_.method = 'FedEM_adv'
         args_.decentralized = False
         args_.sampling_rate = 1.0
         args_.input_dimension = None
@@ -74,13 +74,13 @@ if __name__ == "__main__":
         args_.locally_tune_clients = False
         args_.seed = 1234
         args_.verbose = 1
-        args_.save_path = 'weights/neurips/cifar/client_count/fedavg_adv_new/' + exp_names[itt]
+        args_.save_path = 'weights/neurips/cifar/client_count/fedem_adv_new2/' + exp_names[itt]
         args_.validation = False
         args_.save_freq = 20
 
         # Other Argument Parameters
         Q = 10 # update per round
-        G = 0.15
+        G = 0.5
         num_clients = num_clients_list[itt] #50
         S = 0.05 # Threshold
         step_size = 0.01
