@@ -334,6 +334,11 @@ class Adv_MixtureClient(MixtureClient):
         self.adv_nn = Adv_NN(combined_model, self.altered_dataloader)
         
         self.dataset_name = dataset_name
+        
+        # Unlearning Client
+        self.unlearning_flag = False
+        self.unl_record = []
+        
     
     def set_adv_params(self, adv_proportion = 0, atk_params = None):
         self.adv_proportion = adv_proportion
@@ -411,6 +416,7 @@ class Adv_MixtureClient(MixtureClient):
         
         # adversarial datasets loop, adjust normed and push 
         sample_id, x_adv = self.generate_adversarial_data()
+        y_record = 0
         
         for i in range(sample_id.shape[0]):
             idx = sample_id[i]
@@ -420,8 +426,20 @@ class Adv_MixtureClient(MixtureClient):
             except:
                 x_val_unnorm = unnormalize_femnist(x_val_normed)
         
+            if self.unlearning_flag:
+                y = self.adv_nn.forward(x_val_normed)
+                y_amax = torch.argmax(y,dim = 1)
+                y_benign = torch.argmax(self.adv_nn.forward(self.adv_nn.dataloader.x_data[idx]),dim=1)
+                
+                
+                if y_benign == self.train_iterator.dataset.target[idx] and y_amax != y_benign:
+                    y_record += 1/sample_id.shape[0]
+        
+                self.train_iterator.dataset.target[idx] = y_amax
+        
             self.train_iterator.dataset.data[idx] = x_val_unnorm
         
+        self.unl_record += [y_record]
         self.train_loader = iter(self.train_iterator)
         
         return
@@ -676,6 +694,10 @@ class Adv_Client(Client):
         self.altered_dataloader = self.gen_customdataloader(self.og_dataloader)
         self.adv_nn = Adv_NN(combined_model, self.altered_dataloader)
         self.dataset_name = dataset_name
+        
+        # Unlearning Client
+        self.unlearning_flag = False
+        self.unl_record = []
     
     def set_adv_params(self, adv_proportion = 0, atk_params = None):
         self.adv_proportion = adv_proportion
@@ -753,6 +775,10 @@ class Adv_Client(Client):
         
         # adversarial datasets loop, adjust normed and push 
         sample_id, x_adv = self.generate_adversarial_data()
+        y_record = 0
+        
+        y_collect = self.adv_nn.forward(x_adv)
+        y_amax_collect = torch.argmax(y_collect,dim = 1)
         
         for i in range(sample_id.shape[0]):
             idx = sample_id[i]
@@ -761,9 +787,18 @@ class Adv_Client(Client):
                 x_val_unnorm = unnormalize_cifar10(x_val_normed)
             except:
                 x_val_unnorm = unnormalize_femnist(x_val_normed)
+                
+            if self.unlearning_flag:
+                y_amax = y_amax_collect[i]
+                
+                if y_amax == self.train_iterator.dataset.targets[idx] :
+                    y_record += 1/sample_id.shape[0]
         
-            self.train_iterator.dataset.data[idx] = x_val_unnorm
-        
+                self.train_iterator.dataset.targets[idx] = y_amax
+            else:
+                self.train_iterator.dataset.data[idx] = x_val_unnorm
+            
+        self.unl_record += [y_record]
         self.train_loader = iter(self.train_iterator)
         
         return

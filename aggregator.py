@@ -121,12 +121,23 @@ class Aggregator(ABC):
         self.sampled_clients = list()
 
         self.c_round = 0
+        
+        # Custom -- recording data
+        self.acc_log_dict = {}
+        self.acc_log_dict['rounds'] = []
+        self.acc_log_dict['train_acc'] = []
+        self.acc_log_dict['test_acc'] = []
+        self.acc_log_dict['train_loss'] = []
+        self.acc_log_dict['test_loss'] = []
+
+        
         self.write_logs()
         
         
         # Custom -- added for Krum aggregation
         self.krum_mode = False
         self.exp_adv_nodes = 0
+        
 
     @abstractmethod
     def mix(self):
@@ -148,6 +159,7 @@ class Aggregator(ABC):
     def write_logs(self):
         self.update_test_clients()
 
+        idx = 0
         for global_logger, clients in [
             (self.global_train_logger, self.clients),
             (self.global_test_logger, self.test_clients)
@@ -201,7 +213,15 @@ class Aggregator(ABC):
             global_logger.add_scalar("Train/Metric", global_train_acc, self.c_round)
             global_logger.add_scalar("Test/Loss", global_test_loss, self.c_round)
             global_logger.add_scalar("Test/Metric", global_test_acc, self.c_round)
-
+            
+            if idx == 0:
+                self.acc_log_dict['rounds'] += [self.c_round]
+                self.acc_log_dict['train_acc'] += [global_train_acc]
+                self.acc_log_dict['test_acc'] += [global_test_acc]
+                self.acc_log_dict['train_loss'] += [global_train_loss]
+                self.acc_log_dict['test_loss'] += [global_test_loss]         
+            idx += 1
+            
         if self.verbose > 0:
             print("#" * 80)
 
