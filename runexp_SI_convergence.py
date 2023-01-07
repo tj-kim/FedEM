@@ -39,9 +39,9 @@ import numba
 
 if __name__ == "__main__":
     
-    exp_names = ['FedEM']#, 'FedEM_adv']    
-    adv_mode = [False], # True]
-    exp_name = '23_01_05_SI_convergence/'
+    exp_names = ['FedEM', 'FedEM_adv']    
+    adv_mode = [False, True]
+    exp_name = '23_01_06_SI_convergence/'
     unl_mode = False
     n_vals = 3
     
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     args_.lr_lambda = 0
     args_.lr =0.03
     args_.lr_scheduler = 'multi_step'
-    args_.log_freq = 10
+    args_.log_freq = 3
     args_.device = 'cuda'
     args_.optimizer = 'sgd'
     args_.mu = 0
