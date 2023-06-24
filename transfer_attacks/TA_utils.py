@@ -167,6 +167,85 @@ def dummy_aggregator(args_, num_user=80):
 
     return aggregator, clients
 
+def dummy_aggregator_distmec(args_, num_user=80):
+
+    torch.manual_seed(args_.seed)
+
+    data_dir = get_data_dir(args_.experiment)
+
+    if "logs_root" in args_:
+        logs_root = args_.logs_root
+    else:
+        logs_root = os.path.join("logs", args_to_string(args_))
+
+    print("==> Clients initialization..")
+    clients_temp = init_clients(
+        args_,
+        root_path=os.path.join(data_dir, "train"),
+        logs_root=os.path.join(logs_root, "train")
+    )
+
+    clients = clients_temp[:num_user]
+    
+    print("==> Test Clients initialization..")
+    test_clients_temp = init_clients(
+        args_,
+        root_path=os.path.join(data_dir, "test"),
+        logs_root=os.path.join(logs_root, "test")
+    )
+    
+    test_clients = test_clients_temp[:num_user]
+
+    logs_path = os.path.join(logs_root, "train", "global")
+    os.makedirs(logs_path, exist_ok=True)
+    global_train_logger = SummaryWriter(logs_path)
+
+    logs_path = os.path.join(logs_root, "test", "global")
+    os.makedirs(logs_path, exist_ok=True)
+    global_test_logger = SummaryWriter(logs_path)
+
+    global_learners_ensemble = \
+        get_learners_ensemble(
+            n_learners=args_.n_learners,
+            name=args_.experiment,
+            device=args_.device,
+            optimizer_name=args_.optimizer,
+            scheduler_name=args_.lr_scheduler,
+            initial_lr=args_.lr,
+            input_dim=args_.input_dimension,
+            output_dim=args_.output_dimension,
+            n_rounds=args_.n_rounds,
+            seed=args_.seed,
+            mu=args_.mu
+    )
+
+
+    if args_.decentralized:
+        aggregator_type = 'distmec'
+    else:
+        aggregator_type = AGGREGATOR_TYPE[args_.method]
+
+    aggregator =\
+        get_aggregator(
+            aggregator_type=aggregator_type,
+            clients=clients,
+            global_learners_ensemble=global_learners_ensemble,
+            lr_lambda=args_.lr_lambda,
+            lr=args_.lr,
+            q=args_.q,
+            mu=args_.mu,
+            communication_probability=args_.communication_probability,
+            sampling_rate=args_.sampling_rate,
+            log_freq=args_.log_freq,
+            global_train_logger=global_train_logger,
+            global_test_logger=global_test_logger,
+            test_clients=test_clients,
+            verbose=args_.verbose,
+            seed=args_.seed
+        )
+
+    return aggregator, clients
+
 # ADV functions
 
 # Solve for Fu for all users

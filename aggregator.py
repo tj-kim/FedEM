@@ -1,6 +1,7 @@
 import os
 import time
 import random
+import pdb
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
@@ -487,7 +488,6 @@ class NoCommunicationAggregator(Aggregator):
 
             for client_id, client in enumerate(clients):
                 client.learners_ensemble.learners_weights = weights[client_id]
-    
 
 class CentralizedAggregator(Aggregator):
     r""" Standard Centralized Aggregator.
@@ -512,6 +512,32 @@ class CentralizedAggregator(Aggregator):
                 average_learners(learners, learner, weights=self.clients_weights)
 
         # assign the updated model to all clients
+        self.update_clients()
+
+        self.c_round += 1
+
+        if self.c_round % self.log_freq == 0:
+            self.write_logs()
+            
+    def mix_partial(self, participant_id):
+        self.sample_clients()
+        client_list = []
+        temp_weights = torch.tensor([])
+
+        for i in participant_id:
+            self.clients[i].step()
+            client_list += [self.clients[i]]
+            temp_weights = torch.cat((temp_weights, self.clients_weights[i].unsqueeze(0)))
+
+        # Calculate new client weights
+        weights = temp_weights / temp_weights.sum()
+#         pdb.set_trace()
+
+        for learner_id, learner in enumerate(self.global_learners_ensemble):
+            learners = [client.learners_ensemble[learner_id] for client in client_list]
+            average_learners(learners, learner, weights=weights)
+
+        # Assign the updated model to all clients
         self.update_clients()
 
         self.c_round += 1
