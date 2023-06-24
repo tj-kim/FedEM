@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     exp_names = ['FedAvg', 'FedAvg', 'FedAvg']
     exp_savenames = ['Uw', 'URsv', 'UGoT']
-    exp_name = '23_06_22_DistMEC_FL/'
+    exp_name = '23_06_23_DistMEC_FL/'
     n_vals = 1
 
     # Load the pickled file and check for participation
@@ -104,6 +104,8 @@ if __name__ == "__main__":
             if len(participant_id) == 0:
                 aggregator.c_round += 1
                 current_round = aggregator.c_round
+                if aggregator.c_round % aggregator.log_freq == 0:
+                    aggregator.write_logs()
             else:
                 aggregator.mix_partial(participant_id)            
 
