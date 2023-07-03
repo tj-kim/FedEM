@@ -31,24 +31,23 @@ import numba
 
 
 if __name__ == "__main__":
-    
+    # Define the list of pickled dictionary file paths
+    participant_files = [
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_0.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_1.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_2.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_3.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_4.pkl"
+    ]
 
     exp_names = ['FedAvg', 'FedAvg', 'FedAvg']
     exp_savenames = ['Uw', 'URsv', 'UGoT']
-    exp_name = '23_06_24_DistMEC_FL/'
+    exp_name = '23_07_02_DistMEC_FL/'
     n_vals = 1
-
-    # Load the pickled file and check for participation
-    with open("/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array.pkl", "rb") as tf:
-        loaded_dict = pickle.load(tf)
-
-    # Access the loaded dictionary
-    participant_list = []
-    participant_list += [loaded_dict['Users_w_sa']]
-    participant_list += [loaded_dict['Users_rsv_sa']]
-    participant_list += [loaded_dict['GoT_Users_sa']]
+    
     offset_expr = 16
 
+    
     # Manually set argument parameters
     args_ = Args()
     args_.experiment = "cifar10"
@@ -75,13 +74,24 @@ if __name__ == "__main__":
     args_.verbose = 1
     args_.validation = False
     args_.save_freq = 3
-
-    # Other Argument Parameters
+    
     reward_threshold = 0.4
     num_clients = 16
 
-    for itt in range(len(exp_names)):
-        print("running trial:", itt, "out of", len(exp_names)-1)
+    for itt, participant_file in itertools.product(range(len(exp_names)), participant_files):
+        print("Running iteration:", "(", itt+1, "," , int(participant_file[-5]) + 1, ") ", "out of", "(", len(exp_names), "," , len(participant_files), ") ")
+
+        # Load the pickled file and check for participation
+        with open(participant_file, "rb") as tf:
+            loaded_dict = pickle.load(tf)
+
+        # Access the loaded dictionary
+        participant_list = []
+        participant_list += [loaded_dict['Users_w_sa']]
+        participant_list += [loaded_dict['Users_rsv_sa']]
+        participant_list += [loaded_dict['GoT_Users_sa']]
+
+        # Rest of the code remains the same
 
         # Calculate 
 
@@ -91,6 +101,7 @@ if __name__ == "__main__":
         aggregator, clients = dummy_aggregator_distmec(args_, num_clients)
 
 
+        # Rest of the code remains the same        
         # Train the model
         print("Training..")
         pbar = tqdm(total=args_.n_rounds)
@@ -118,15 +129,13 @@ if __name__ == "__main__":
 
             os.makedirs(save_root, exist_ok=True)
             aggregator.save_state(save_root)
-
-        # Pickle aggregator
-        train_log_save_path = args_.save_path + '/train_log.p'
+            
+        # Save the train log
+        train_log_save_path = args_.save_path + '/train_log' + participant_file[-5] + '.p'
         aggregator.global_train_logger.close()
 
         with open(train_log_save_path, 'wb') as handle:
             pickle.dump(aggregator.acc_log_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
         del aggregator, clients
         torch.cuda.empty_cache()
-            
