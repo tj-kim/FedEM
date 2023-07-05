@@ -39,14 +39,16 @@ if __name__ == "__main__":
         "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_3.pkl",
         "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_4.pkl"
     ]
+    
+#     participant_files = ["/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_0.pkl"]
 
     exp_names = ['FedAvg', 'FedAvg', 'FedAvg']
     exp_savenames = ['Uw', 'URsv', 'UGoT']
-    exp_name = '23_07_02_DistMEC_FL/'
+    exp_name = '23_07_04_DistMEC_SL/'
     n_vals = 1
     
     offset_expr = 16
-
+    rounds_max = 999 # based on loaded trace
     
     # Manually set argument parameters
     args_ = Args()
@@ -57,7 +59,7 @@ if __name__ == "__main__":
     args_.input_dimension = None
     args_.output_dimension = None
     args_.n_learners= n_vals
-    args_.n_rounds = 999-offset_expr # Reduced number of steps
+    args_.n_rounds = rounds_max-offset_expr # Reduced number of steps
     args_.bz = 128
     args_.local_steps = 1
     args_.lr_lambda = 0

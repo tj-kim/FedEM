@@ -535,7 +535,8 @@ class CentralizedAggregator(Aggregator):
 
         for learner_id, learner in enumerate(self.global_learners_ensemble):
             learners = [client.learners_ensemble[learner_id] for client in client_list]
-            average_learners(learners, learner, weights=weights)
+#             average_learners(learners, learner, weights=weights)
+            average_learners_split(learners, learner, weights=weights, num_skip = 6)
 
         # Assign the updated model to all clients
         self.update_clients()
