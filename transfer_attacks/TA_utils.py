@@ -409,3 +409,22 @@ def load_client_data(clients, c_id, mode = 'test'):
     dataloader = Custom_Dataloader(data_x, data_y)
     
     return dataloader
+
+def update_aggregator_dataset(aggregator, data_prop):
+    
+    for c_id in range(len(aggregator.clients)):
+            dataset = aggregator.clients[c_id].train_iterator.dataset
+            num_points = dataset.targets.shape[0]
+            new_num = int(num_points * data_prop)
+            
+#             dataset.targets = dataset.targets[:new_num]
+#             dataset.data = dataset.data[:new_num]
+#             dataset.indices = dataset.indices[:new_num]
+            
+            aggregator.clients[c_id].train_iterator.dataset.targets = dataset.targets[:new_num]
+            aggregator.clients[c_id].train_iterator.dataset.data = dataset.data[:new_num]
+            aggregator.clients[c_id].train_iterator.dataset.indices = dataset.indices[:new_num]
+            
+#             aggregator.clients[c_id].train_iterator.dataset = dataset
+
+    return

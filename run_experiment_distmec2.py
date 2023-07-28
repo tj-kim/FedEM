@@ -33,22 +33,23 @@ import numba
 if __name__ == "__main__":
     # Define the list of pickled dictionary file paths
     participant_files = [
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_0.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_1.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_2.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_3.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_4.pkl"
+#         "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard0.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard1.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard2.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard3.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard4.pkl"
     ]
     
-#     participant_files = ["/home/ubuntu/FedEM/distmec_participant_pkls/23_06_22_participant_array_0.pkl"]
 
     exp_names = ['FedAvg', 'FedAvg', 'FedAvg']
     exp_savenames = ['Uw', 'URsv', 'UGoT']
-    exp_name = '23_07_04_DistMEC_SL/'
+    exp_name = '23_07_28_DistMEC_SL_newmodel_20c_300t_data075_hard/'
     n_vals = 1
     
-    offset_expr = 16
-    rounds_max = 999 # based on loaded trace
+    num_clients = 20
+    offset_expr = num_clients
+    rounds_max = 300 + num_clients # based on loaded trace
+    client_data_proportion = 0.75
     
     # Manually set argument parameters
     args_ = Args()
@@ -77,8 +78,7 @@ if __name__ == "__main__":
     args_.validation = False
     args_.save_freq = 3
     
-    reward_threshold = 0.4
-    num_clients = 16
+    reward_threshold = 0.0
 
     for itt, participant_file in itertools.product(range(len(exp_names)), participant_files):
         print("Running iteration:", "(", itt+1, "," , int(participant_file[-5]) + 1, ") ", "out of", "(", len(exp_names), "," , len(participant_files), ") ")
@@ -102,6 +102,8 @@ if __name__ == "__main__":
         # Generate the dummy values here
         aggregator, clients = dummy_aggregator_distmec(args_, num_clients)
 
+        # Alter client data INSIDE AGGREGATOR to be proportoinally less
+        update_aggregator_dataset(aggregator, client_data_proportion)
 
         # Rest of the code remains the same        
         # Train the model
@@ -112,7 +114,7 @@ if __name__ == "__main__":
 
             # Extract participant id # list 
             participant_sub = participant_list[itt][:,current_round+offset_expr]
-            participant_id = np.where(participant_sub > 0.4)[0]
+            participant_id = np.where(participant_sub > reward_threshold)[0]
 
             if len(participant_id) == 0:
                 aggregator.c_round += 1
