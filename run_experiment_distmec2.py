@@ -33,27 +33,27 @@ import numba
 if __name__ == "__main__":
     # Define the list of pickled dictionary file paths
     participant_files = [
-#         "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard0.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard1.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard2.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard3.pkl",
-        "/home/ubuntu/FedEM/distmec_participant_pkls/23_07_28_participant_array_20c_hard4.pkl"
+        "/home/ubuntu/FedEM/distmec_participant_pkls/cifar100/23_07_28_participant_array_cifar100_20c_hard0.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/cifar100/23_07_28_participant_array_cifar100_20c_hard1.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/cifar100/23_07_28_participant_array_cifar100_20c_hard2.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/cifar100/23_07_28_participant_array_cifar100_20c_hard3.pkl",
+        "/home/ubuntu/FedEM/distmec_participant_pkls/cifar100/23_07_28_participant_array_cifar100_20c_hard4.pkl"
     ]
     
 
     exp_names = ['FedAvg', 'FedAvg', 'FedAvg']
     exp_savenames = ['Uw', 'URsv', 'UGoT']
-    exp_name = '23_07_28_DistMEC_SL_newmodel_20c_300t_data075_hard/'
+    exp_name = '23_07_28_DistMEC_SL_newmodel_20c_cifar100_300t_data10_hard/'
     n_vals = 1
     
     num_clients = 20
     offset_expr = num_clients
     rounds_max = 300 + num_clients # based on loaded trace
-    client_data_proportion = 0.75
+    client_data_proportion = 1
     
     # Manually set argument parameters
     args_ = Args()
-    args_.experiment = "cifar10"
+    args_.experiment = "cifar100"
     args_.method = "FedAvg"
     args_.decentralized = False
     args_.sampling_rate = 1.0
