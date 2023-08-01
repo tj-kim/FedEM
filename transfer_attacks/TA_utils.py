@@ -423,7 +423,7 @@ def update_aggregator_dataset(aggregator, data_prop):
             
             aggregator.clients[c_id].train_iterator.dataset.targets = dataset.targets[:new_num]
             aggregator.clients[c_id].train_iterator.dataset.data = dataset.data[:new_num]
-            aggregator.clients[c_id].train_iterator.dataset.indices = dataset.indices[:new_num]
+#             aggregator.clients[c_id].train_iterator.dataset.indices = dataset.indices[:new_num]
             
 #             aggregator.clients[c_id].train_iterator.dataset = dataset
 
